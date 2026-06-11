@@ -177,6 +177,33 @@ $router->map('GET|POST', '/[i:year]/[i:month]/[:slug]', function ($year, $month,
     }
 }, 'post');
 
+// Static assets bundled inside a theme folder (templates/<name>/assets/).
+// Served through PHP because templates/ lives outside the web root; the
+// extension whitelist and realpath containment check keep it from ever
+// serving theme PHP or anything outside the assets directory.
+$router->map('GET', '/themes/[:theme]/[**:file]', function ($theme, $file) use ($notFound) {
+    $types = [
+        'css' => 'text/css; charset=utf-8', 'js' => 'application/javascript; charset=utf-8',
+        'png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'gif' => 'image/gif',
+        'svg' => 'image/svg+xml', 'webp' => 'image/webp', 'ico' => 'image/x-icon',
+        'woff' => 'font/woff', 'woff2' => 'font/woff2',
+    ];
+    $ext = strtolower(pathinfo((string) $file, PATHINFO_EXTENSION));
+    if (!isset($types[$ext])) {
+        $notFound();
+    }
+    $assetsDir = realpath(DPL_TEMPLATES_DIR . '/' . basename((string) $theme) . '/assets');
+    $path      = $assetsDir === false ? false : realpath($assetsDir . '/' . $file);
+    if ($assetsDir === false || $path === false || !str_starts_with($path, $assetsDir . '/') || !is_file($path)) {
+        $notFound();
+    }
+    header('Content-Type: ' . $types[$ext]);
+    header('Cache-Control: public, max-age=86400');
+    header('Content-Length: ' . (string) filesize($path));
+    readfile($path);
+    exit;
+}, 'themeAsset');
+
 $router->map('GET', '/feed', function () use ($requireConfig, $siteConfig, $blogStore, $router) {
     $requireConfig();
 

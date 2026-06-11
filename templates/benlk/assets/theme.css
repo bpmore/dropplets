@@ -1,0 +1,123 @@
+/* benlk — utilitarian personal-site theme: dark walnut header band,
+   condensed headlines, classic blue links, mono datelines. Original theme
+   inspired by the direction of benlk's Dropplets themes. */
+
+:root {
+    --bg: #ffffff;
+    --text: #111111;
+    --heading: #000000;
+    --muted: #6c6c6c;
+    --rule: #e2e2e2;
+    --link: #0033aa;
+    --visited: #6d3aa0;
+    --band: #34261a;
+    --band-text: #f3ead9;
+    --brand: #e8923a;
+    --cond: "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    --mono: "Ubuntu Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #161412;
+        --text: #ddd6cc;
+        --heading: #f4eee2;
+        --muted: #8f877a;
+        --rule: #322d27;
+        --link: #7ba2ff;
+        --visited: #c39ae8;
+        --band: #21170e;
+        --band-text: #f3ead9;
+    }
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Tahoma, "Lucida Grande", Helvetica, Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+a { color: var(--link); text-decoration: none; }
+a:visited { color: var(--visited); }
+a:hover { text-decoration: underline; }
+img { max-width: 100%; height: auto; }
+
+.masthead {
+    background: var(--band);
+    border-bottom: 4px solid var(--brand);
+    padding: 2.75rem 1.25rem;
+    text-align: center;
+}
+
+.site-title {
+    font-family: var(--cond);
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: .01em;
+    color: var(--band-text) !important;
+    text-transform: uppercase;
+}
+
+.site-title:hover { color: var(--brand) !important; text-decoration: none; }
+.site-info { color: var(--band-text); opacity: .75; margin: .5rem 0 0; }
+
+.wrap { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+
+.entry { padding: 2.25rem 0; border-bottom: 1px solid var(--rule); }
+.entry:last-of-type { border-bottom: 0; }
+
+.entry-meta, .post-meta { font-family: var(--mono); font-size: .85rem; color: var(--muted); margin: 0 0 .35rem; }
+
+.entry-title { margin: 0 0 .5rem; font-family: var(--cond); font-size: 1.8rem; line-height: 1.2; text-transform: uppercase; }
+.entry-title a, .entry-title a:visited { color: var(--heading); }
+.entry-title a:hover { color: var(--link); text-decoration: none; }
+
+.entry-excerpt { margin: 0; }
+.empty-state { text-align: center; color: var(--muted); padding: 4rem 0; }
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    list-style: none;
+    margin: 2.5rem 0 0;
+    padding: 1rem 0 0;
+    border-top: 4px solid var(--band);
+    font-family: var(--mono);
+    font-size: .9rem;
+}
+
+.page-state { color: var(--muted); margin: 0 auto; }
+
+.post-header { margin: 2.25rem 0 1.5rem; border-bottom: 1px solid var(--rule); padding-bottom: 1rem; }
+.post-title { font-family: var(--cond); color: var(--heading); font-size: 2.4rem; line-height: 1.15; margin: .25rem 0 .5rem; text-transform: uppercase; }
+.post-hero { margin-bottom: 1.75rem; }
+
+.post-content h1, .post-content h2, .post-content h3 {
+    font-family: var(--cond);
+    color: var(--heading);
+    text-transform: uppercase;
+    line-height: 1.25;
+    margin: 2rem 0 .6rem;
+}
+
+.post-content p { margin: 0 0 1.2rem; }
+.post-content a { text-decoration: underline; }
+.post-content blockquote { margin: 1.5rem 0; padding-left: 1.25rem; border-left: 4px solid var(--brand); color: var(--muted); }
+.post-content code { font-family: var(--mono); font-size: .9em; background: var(--rule); padding: .1em .35em; }
+.post-content pre { background: var(--rule); padding: 1rem 1.25rem; overflow-x: auto; }
+.post-content pre code { background: none; padding: 0; }
+
+.post-footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--rule); font-family: var(--mono); font-size: .9rem; }
+
+.center-page { text-align: center; padding: 4rem 0; }
+.center-page .display { font-family: var(--cond); font-size: 6rem; color: var(--brand); margin: 0; }
+
+.site-footer { text-align: center; color: var(--muted); font-family: var(--mono); font-size: .85rem; padding: 1rem 1.25rem 3rem; border-top: 1px solid var(--rule); }
+.site-footer a { color: var(--muted); text-decoration: underline; }

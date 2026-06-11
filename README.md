@@ -70,12 +70,45 @@ All assets are self-hosted (`public/static/`): no CDNs, no webfonts. Public page
 
 Keeping `data/` outside `public/` means your password hash and post store are never reachable over HTTP, regardless of web server.
 
+## Themes
+
+Fourteen themes ship in `templates/`; pick one in Settings. All are zero-JS,
+self-hosted, and most adapt automatically to light/dark mode:
+
+| Theme | Personality |
+|---|---|
+| `liquid-new` | Default. Clean card grid, system fonts, dark-mode aware |
+| `puddle` | Quiet literary serif, single column, hairline rules |
+| `typewriter` | Warm paper, typewriter headings, dashed dividers |
+| `bink` | Date-gutter rows, orange brand band |
+| `benlk` | Condensed uppercase headlines, dark walnut header, blue links |
+| `terminal` | Phosphor-green console with a blinking cursor (always dark) |
+| `gazette` | Broadsheet: double rules, datelines, ruled columns, drop caps |
+| `noir` | Stark black, giant numbered headlines, one red accent (always dark) |
+| `bloom` | Soft pastels, rounded glassy cards |
+| `brutalist` | Hard borders, offset shadows, highlighter yellow |
+| `zen` | Almost nothing: titles, dates, whitespace |
+| `magazine` | Bold editorial hero story + kicker grid |
+| `midnight` | Deep indigo, glass cards, violet-cyan glow (always dark) |
+| `polaroid` | Snapshots taped to a board, handwritten captions |
+
+`puddle`, `typewriter`, `bink`, and `benlk` are original reinterpretations of
+community themes made for the original Dropplets (by jacksondc, judges119, and
+benlk) — same spirit, all-new code.
+
 ## Building templates
 
 A template is a folder under `templates/` with two required files:
 
 - `home.php` lists posts
 - `post.php` displays a single post
+
+Static files (CSS, images, fonts) go in an `assets/` subfolder, served at
+`/themes/<name>/<file>`. Call `Dropplets\dpl_render_head()` from your
+`header.php` to get all SEO/social meta for free, and
+`Dropplets\dpl_post_url($router, $post)` for canonical post links.
+`Dropplets\dpl_excerpt($post)` gives a safe plain-text excerpt (it returns ''
+for password-protected posts).
 
 These variables are available:
 

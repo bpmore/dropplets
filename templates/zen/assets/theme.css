@@ -1,0 +1,77 @@
+/* zen — almost nothing. Original theme. */
+
+:root {
+    --bg: #fcfcfa;
+    --text: #444;
+    --heading: #1a1a1a;
+    --muted: #b0b0aa;
+    --accent: #1a1a1a;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #161616;
+        --text: #b5b5b0;
+        --heading: #eee;
+        --muted: #555;
+        --accent: #eee;
+    }
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 300;
+    font-size: 1.0625rem;
+    line-height: 1.9;
+}
+
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--muted); }
+a:hover { border-bottom-color: var(--accent); }
+img { max-width: 100%; height: auto; }
+
+.masthead { max-width: 34rem; margin: 0 auto; padding: 7rem 1.5rem 0; text-align: center; }
+.site-title { font-size: .95rem; letter-spacing: .4em; text-transform: uppercase; color: var(--heading); border: 0; }
+.site-info { color: var(--muted); font-size: .9rem; margin: 1rem 0 0; }
+
+.wrap { max-width: 34rem; margin: 0 auto; padding: 4rem 1.5rem 5rem; }
+
+.zen-list { list-style: none; margin: 0; padding: 0; }
+.zen-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 1.5rem; padding: .9rem 0; }
+.zen-list a { color: var(--heading); border: 0; }
+.zen-list a:hover { border-bottom: 1px solid var(--heading); }
+.zen-list time { color: var(--muted); font-size: .8rem; white-space: nowrap; }
+
+.empty-state { text-align: center; color: var(--muted); }
+
+.pagination { display: flex; justify-content: center; gap: 2rem; list-style: none; margin: 4rem 0 0; padding: 0; font-size: .9rem; }
+.pagination a { border: 0; }
+.page-state { color: var(--muted); }
+
+.post-header { margin: 0 0 3rem; text-align: center; }
+.post-title { color: var(--heading); font-weight: 300; font-size: 1.9rem; line-height: 1.35; margin: 0 0 .75rem; letter-spacing: .01em; }
+.post-meta, .entry-meta { color: var(--muted); font-size: .8rem; letter-spacing: .15em; text-transform: uppercase; margin: 0; }
+.post-hero { margin-bottom: 2.5rem; }
+
+.post-content h1, .post-content h2, .post-content h3 { color: var(--heading); font-weight: 400; line-height: 1.4; margin: 2.5rem 0 .75rem; }
+.post-content p { margin: 0 0 1.4rem; }
+.post-content blockquote { margin: 2rem 0; padding: 0 1.5rem; color: var(--muted); font-style: italic; border: 0; text-align: center; }
+.post-content code { font-family: ui-monospace, Menlo, monospace; font-size: .85em; color: var(--heading); }
+.post-content pre { background: rgba(127,127,127,.07); padding: 1rem 1.25rem; overflow-x: auto; border-radius: 2px; }
+.post-content hr { border: 0; text-align: center; margin: 3rem 0; }
+.post-content hr::after { content: "· · ·"; color: var(--muted); letter-spacing: .6em; }
+
+.post-footer { margin-top: 4rem; text-align: center; font-size: .85rem; }
+.post-footer a { border: 0; color: var(--muted); }
+.post-footer a:hover { color: var(--heading); }
+
+.center-page { text-align: center; padding: 4rem 0; }
+.center-page .display { font-weight: 200; font-size: 4rem; color: var(--muted); margin: 0; }
+
+.site-footer { text-align: center; color: var(--muted); font-size: .75rem; letter-spacing: .1em; padding: 0 1.5rem 5rem; }
+.site-footer a { color: var(--muted); border: 0; }
+.site-footer a:hover { color: var(--heading); }

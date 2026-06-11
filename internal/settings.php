@@ -47,7 +47,11 @@ $isNew = ($siteConfig['name'] === '');
                 <textarea class="form-control" name="blogHeaderInject" rows="3"><?= e($siteConfig['headerInject']) ?></textarea>
                 <small class="text-muted">Raw HTML, inserted into every page head. Only use trusted snippets (for example, analytics).</small>
                 <label><?php i18n("settings_template"); ?></label>
-                <input class="form-control" type="text" name="blogTemplate" required value="<?= e($siteConfig['template']) ?>" />
+                <select class="form-select" name="blogTemplate" required>
+                    <?php foreach (Dropplets\dpl_template_names() as $tplName): ?>
+                        <option value="<?= e($tplName) ?>" <?= $siteConfig['template'] === $tplName ? 'selected' : '' ?>><?= e($tplName) ?></option>
+                    <?php endforeach; ?>
+                </select>
                 <label><?php i18n("settings_posts_per_page"); ?></label>
                 <input class="form-control" type="number" name="blogPostsPerPage" min="1" required value="<?= e((string) $siteConfig['postsPerPage']) ?>" />
                 <label><?php i18n("settings_timezone"); ?></label>

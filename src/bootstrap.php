@@ -144,6 +144,113 @@ function dpl_unique_slug(Store $blogStore, string $title, ?int $excludeId = null
 }
 
 /**
+ * Emit the shared <head> content every theme needs: charset, viewport, title,
+ * theme stylesheet, favicon, RSS discovery, canonical URL, OpenGraph/Twitter
+ * cards, and the admin's headerInject snippet. Themes call this from their
+ * header.php so 14 themes don't carry 14 copies of the meta logic.
+ *
+ * @param array<string,mixed>      $siteConfig
+ * @param array<string,mixed>|null $post Current post on single-post pages.
+ */
+function dpl_render_head(array $siteConfig, \AltoRouter $router, string $pageTitle, ?array $post, string $themeCssHref): void
+{
+    $siteName  = $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Dropplets';
+    $fullTitle = $siteName . ' | ' . $pageTitle;
+
+    $canonical = '';
+    if ($siteConfig['domain'] !== '') {
+        $path      = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+        $canonical = rtrim((string) $siteConfig['domain'], '/') . $path;
+    }
+
+    $socialImage = (isset($post['imageUrl']) && $post['imageUrl'] !== '' && empty($post['password']))
+        ? (string) $post['imageUrl']
+        : (string) $siteConfig['OGImage'];
+    $ogType = isset($post['title']) ? 'article' : 'website';
+    $base   = e((string) $siteConfig['basePath']);
+
+    echo '<meta charset="utf-8">' . "\n";
+    echo '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">' . "\n";
+    echo '<meta name="robots" content="index, follow">' . "\n";
+    echo '<title>' . e($fullTitle) . '</title>' . "\n";
+    echo '<link rel="stylesheet" href="' . e($themeCssHref) . '">' . "\n";
+    echo '<link rel="icon" href="' . $base . '/logo.svg" type="image/svg+xml">' . "\n";
+    echo '<link rel="alternate" type="application/rss+xml" title="' . e($siteName) . '" href="' . e($router->generate('feed')) . '">' . "\n";
+    if ($canonical !== '') {
+        echo '<link rel="canonical" href="' . e($canonical) . '">' . "\n";
+        echo '<meta property="og:url" content="' . e($canonical) . '">' . "\n";
+    }
+    if ($siteConfig['info'] !== '') {
+        echo '<meta name="description" content="' . e((string) $siteConfig['info']) . '">' . "\n";
+        echo '<meta property="og:description" content="' . e((string) $siteConfig['info']) . '">' . "\n";
+    }
+    echo '<meta property="og:title" content="' . e($fullTitle) . '">' . "\n";
+    echo '<meta property="og:site_name" content="' . e($siteName) . '">' . "\n";
+    echo '<meta property="og:type" content="' . e($ogType) . '">' . "\n";
+    if ($socialImage !== '') {
+        echo '<meta property="og:image" content="' . e($socialImage) . '">' . "\n";
+        echo '<meta name="twitter:image" content="' . e($socialImage) . '">' . "\n";
+    }
+    echo '<meta name="twitter:card" content="' . ($socialImage !== '' ? 'summary_large_image' : 'summary') . '">' . "\n";
+    echo '<meta name="twitter:title" content="' . e($fullTitle) . '">' . "\n";
+
+    // headerInject is raw markup supplied by the authenticated admin (for
+    // analytics snippets and the like). It is intentionally NOT escaped and
+    // is writable only from the CSRF-protected settings form.
+    if (!empty($siteConfig['headerInject'])) {
+        echo $siteConfig['headerInject'] . "\n";
+    }
+}
+
+/**
+ * Plain-text excerpt of a post body for list views. Strips markdown syntax
+ * crudely and cuts at a word boundary. Password-protected posts always
+ * return '' — their content must never leak into a listing.
+ *
+ * @param array<string,mixed> $post
+ */
+function dpl_excerpt(array $post, int $limit = 160): string
+{
+    if (!empty($post['password'])) {
+        return '';
+    }
+    $text = (string) ($post['content'] ?? '');
+    $text = preg_replace('/```.*?```/s', ' ', $text) ?? $text;            // fenced code
+    $text = preg_replace('/!\[[^\]]*\]\([^)]*\)/', ' ', $text) ?? $text;  // images
+    $text = preg_replace('/\[([^\]]*)\]\([^)]*\)/', '$1', $text) ?? $text; // links -> text
+    $text = preg_replace('/^#{1,6}\s+.*$/m', ' ', $text) ?? $text;        // headings out entirely
+    $text = preg_replace('/^\s*(?:[-+*]|\d+\.)\s+/m', '', $text) ?? $text; // list markers
+    $text = preg_replace('/^>\s?/m', '', $text) ?? $text;                 // blockquotes
+    $text = str_replace(['**', '__', '*', '_', '`', '~~'], '', $text);    // emphasis
+    $text = trim(preg_replace('/\s+/', ' ', $text) ?? '');
+    if (mb_strlen($text) <= $limit) {
+        return $text;
+    }
+    $cut = mb_substr($text, 0, $limit);
+    $sp  = mb_strrpos($cut, ' ');
+    if ($sp !== false && $sp > 40) {
+        $cut = mb_substr($cut, 0, $sp);
+    }
+    return $cut . '…';
+}
+
+/**
+ * Names of installed templates: directories under templates/ that provide
+ * the two required views.
+ */
+function dpl_template_names(): array
+{
+    $names = [];
+    foreach (glob(DPL_TEMPLATES_DIR . '/*', GLOB_ONLYDIR) ?: [] as $dir) {
+        if (is_file($dir . '/home.php') && is_file($dir . '/post.php')) {
+            $names[] = basename($dir);
+        }
+    }
+    sort($names);
+    return $names;
+}
+
+/**
  * Canonical URL for a post: /{year}/{month}/{slug}, dated from the post's
  * publish timestamp in the site's configured timezone.
  */

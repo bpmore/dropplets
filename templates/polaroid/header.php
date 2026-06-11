@@ -14,7 +14,7 @@ $siteName = $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Dropplets';
         $router,
         $pageTitle ?? '',
         $post ?? null,
-        $router->generate('themeAsset', ['theme' => 'liquid-new', 'file' => 'theme.css'])
+        $router->generate('themeAsset', ['theme' => 'polaroid', 'file' => 'theme.css'])
     ); ?>
 </head>
 
