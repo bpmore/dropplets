@@ -60,3 +60,4 @@ Changes since the initial 3.0 rewrite:
 - The public theme was rebuilt: semantic HTML, one ~7 KB stylesheet, system fonts, zero JavaScript, dark-mode support, lazy-loaded images, full OpenGraph/Twitter/canonical metadata. A public page is now ~10 KB of HTML+CSS instead of ~320 KB of framework assets.
 - Fixed: i18n strings (and date formats) silently fell back to their raw key names because the language table never reached global scope under Composer's file autoloading.
 - Fixed: the admin stylesheet pointed at a path outside the web root and never loaded.
+- Optional TOTP two-factor login (RFC 6238, dependency-free). Enroll from Settings; state lives in `data/totp.json` with hashed one-time recovery codes and a persisted time-step counter so an intercepted code can never be replayed. The login throttle covers code attempts. Deleting `data/totp.json` on the server reverts to password-only login.

@@ -42,6 +42,17 @@ docker compose up --build
 
 Go to `https://your-domain/dashboard`. Writing, editing, publishing, hiding, deleting, settings, and logout all live there.
 
+### Two-factor login (optional)
+
+Settings → "Two-factor login" → Set up. Scan the QR code with any TOTP
+authenticator app (1Password, Google Authenticator, Authy, Apple Passwords, …),
+confirm one code, and store the recovery codes it shows you. From then on,
+login asks for your password and then a 6-digit code.
+
+Recovery: each recovery code works once in place of a TOTP code. If you lose
+both the authenticator and the codes, delete `data/totp.json` on the server to
+fall back to password-only login.
+
 An RSS feed of published posts is available at `/feed`.
 
 ## Project layout

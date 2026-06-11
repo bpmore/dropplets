@@ -51,6 +51,17 @@ $isNew = ($siteConfig['name'] === '');
                 <label><?php i18n("settings_basepath"); ?></label>
                 <input class="form-control" type="text" name="blogBase" value="<?= e($siteConfig['basePath']) ?>" />
             </fieldset>
+            <?php if (Dropplets\Security::isAuthenticated() && !$isNew): ?>
+                <fieldset class="my-3">
+                    <legend class="fs-6">Two-factor login</legend>
+                    <p class="mb-2">
+                        Status: <strong><?= $twoFactor->enabled() ? 'enabled' : 'disabled' ?></strong>
+                        <a class="btn btn-sm btn-secondary ms-2" href="<?= e($router->generate('twofactor')) ?>">
+                            <?= $twoFactor->enabled() ? 'Manage' : 'Set up' ?>
+                        </a>
+                    </p>
+                </fieldset>
+            <?php endif; ?>
             <?php if (!Dropplets\Security::isAuthenticated() || !$isNew): ?>
                 <fieldset class="my-3">
                     <?php if ($isNew): ?>

@@ -39,6 +39,7 @@ $numPages = max(1, (int) ceil($publishedCount / $postsPerPage));
 
 $uploadPublicBase = rtrim((string) $siteConfig['domain'], '/') . '/uploads';
 $images = new ImageHandler(DPL_UPLOAD_DIR, $uploadPublicBase);
+$twoFactor = new TwoFactor(DPL_DATA_DIR);
 
 $redirect = static function (string $name, array $params = []) use ($router): void {
     header('Location: ' . $router->generate($name, $params));
@@ -344,7 +345,7 @@ $router->map('GET|POST', '/write', function () use ($requireConfig, $requireAuth
 // Settings / auth
 // ---------------------------------------------------------------------------
 
-$router->map('GET|POST', '/settings', function () use ($configStore, $siteConfig, $router, $redirect) {
+$router->map('GET|POST', '/settings', function () use ($configStore, $siteConfig, $twoFactor, $router, $redirect) {
     // Reachable when no config exists yet (first-time setup) OR when authed.
     if (!(Security::isAuthenticated() || !$configStore->exists())) {
         $redirect('login');
@@ -409,7 +410,7 @@ $router->map('GET|POST', '/settings', function () use ($configStore, $siteConfig
     require DPL_INTERNAL_DIR . '/settings.php';
 }, 'settings');
 
-$router->map('GET|POST', '/login', function () use ($configStore, $siteConfig, $router, $redirect) {
+$router->map('GET|POST', '/login', function () use ($configStore, $siteConfig, $twoFactor, $router, $redirect) {
     $requireConfigExists = $configStore->exists();
     if (!$requireConfigExists) {
         $redirect('settings');
@@ -431,8 +432,15 @@ $router->map('GET|POST', '/login', function () use ($configStore, $siteConfig, $
 
         $password = (string) ($_POST['blogPassword'] ?? '');
         if ($password !== '' && password_verify($password, (string) $siteConfig['password'])) {
-            Security::clearLoginFailures(DPL_DATA_DIR);
             Security::regenerate();
+            if ($twoFactor->enabled()) {
+                // Password OK, but hold authentication until the second
+                // factor checks out. Failures are NOT cleared yet, so the
+                // shared throttle also covers code guessing.
+                $_SESSION['pending_2fa'] = time();
+                $redirect('loginVerify');
+            }
+            Security::clearLoginFailures(DPL_DATA_DIR);
             $_SESSION['isAuthenticated'] = true;
             $redirect('dashboard');
         }
@@ -447,6 +455,101 @@ $router->map('GET|POST', '/login', function () use ($configStore, $siteConfig, $
     unset($_SESSION['login_error']);
     require DPL_INTERNAL_DIR . '/login.php';
 }, 'login');
+
+$router->map('GET|POST', '/login/verify', function () use ($twoFactor, $router, $redirect) {
+    if (Security::isAuthenticated()) {
+        $redirect('dashboard');
+    }
+    // Only reachable for five minutes after a correct password.
+    $pending = (int) ($_SESSION['pending_2fa'] ?? 0);
+    if ($pending === 0 || time() - $pending > 300 || !$twoFactor->enabled()) {
+        unset($_SESSION['pending_2fa']);
+        $redirect('login');
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $lockedFor = Security::loginLockedFor(DPL_DATA_DIR);
+        if ($lockedFor > 0) {
+            $_SESSION['login_error'] = sprintf(
+                'Too many failed attempts. Try again in about %d minute%s.',
+                $mins = max(1, (int) ceil($lockedFor / 60)),
+                $mins === 1 ? '' : 's'
+            );
+            $redirect('loginVerify');
+        }
+
+        $code = (string) ($_POST['code'] ?? '');
+        if ($twoFactor->verifyTotp($code) || $twoFactor->useRecoveryCode($code)) {
+            unset($_SESSION['pending_2fa']);
+            Security::clearLoginFailures(DPL_DATA_DIR);
+            Security::regenerate();
+            $_SESSION['isAuthenticated'] = true;
+            $redirect('dashboard');
+        }
+        Security::recordLoginFailure(DPL_DATA_DIR);
+        $_SESSION['login_error'] = 'That code was not correct.';
+        $redirect('loginVerify');
+    }
+
+    $pageTitle = 'Verify';
+    $loginError = $_SESSION['login_error'] ?? '';
+    unset($_SESSION['login_error']);
+    require DPL_INTERNAL_DIR . '/verify2fa.php';
+}, 'loginVerify');
+
+$router->map('GET|POST', '/settings/2fa', function () use ($requireConfig, $requireAuth, $siteConfig, $twoFactor, $router, $redirect) {
+    $requireConfig();
+    $requireAuth();
+
+    $pageTitle        = 'Two-Factor Login';
+    $justEnabledCodes = null;
+    $twoFaError       = '';
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $action = (string) ($_POST['twofaAction'] ?? '');
+
+        if ($action === 'enable' && !$twoFactor->enabled()) {
+            // The candidate secret lives only in the session until the admin
+            // proves their authenticator produces matching codes — you cannot
+            // lock yourself out with a mis-scanned QR.
+            $secret = (string) ($_SESSION['totp_setup_secret'] ?? '');
+            if ($secret !== '' && Totp::verify($secret, (string) ($_POST['code'] ?? '')) !== null) {
+                $plain  = TwoFactor::generateRecoveryCodes();
+                $hashes = array_map(
+                    static fn (string $c) => password_hash(TwoFactor::normalizeRecoveryCode($c), PASSWORD_DEFAULT),
+                    $plain
+                );
+                if ($twoFactor->enable($secret, $hashes)) {
+                    unset($_SESSION['totp_setup_secret']);
+                    $justEnabledCodes = $plain; // shown exactly once
+                } else {
+                    $twoFaError = 'Could not write data/totp.json — check that data/ is writable.';
+                }
+            } else {
+                $twoFaError = 'That code did not match. Enter a fresh code from your authenticator app.';
+            }
+        } elseif ($action === 'disable' && $twoFactor->enabled()) {
+            $code = (string) ($_POST['code'] ?? '');
+            if ($twoFactor->verifyTotp($code) || $twoFactor->useRecoveryCode($code)) {
+                $twoFactor->disable();
+                $redirect('settings');
+            }
+            $twoFaError = 'Enter a valid current code (or a recovery code) to disable two-factor login.';
+        }
+    }
+
+    $setupSecret = null;
+    $otpauthUri  = null;
+    if (!$twoFactor->enabled() && $justEnabledCodes === null) {
+        if (empty($_SESSION['totp_setup_secret'])) {
+            $_SESSION['totp_setup_secret'] = Totp::generateSecret();
+        }
+        $setupSecret = (string) $_SESSION['totp_setup_secret'];
+        $otpauthUri  = Totp::otpauthUri($setupSecret, 'admin', $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Dropplets');
+    }
+
+    require DPL_INTERNAL_DIR . '/twofactor.php';
+}, 'twofactor');
 
 $router->map('POST', '/logout', function () use ($redirect) {
     $_SESSION = [];

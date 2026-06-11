@@ -46,6 +46,16 @@
         });
     }
 
+    // Two-factor enrollment: render the otpauth:// URI as a QR code, locally
+    // (sending the secret to a remote QR service would leak it).
+    var qrEl = document.getElementById('totpQr');
+    if (qrEl && window.qrcode) {
+        var qr = window.qrcode(0, 'M');
+        qr.addData(qrEl.getAttribute('data-otpauth'));
+        qr.make();
+        qrEl.innerHTML = qr.createSvgTag({ scalable: true, margin: 2 });
+    }
+
     // Client-side guard matching the server's effective upload cap, which the
     // write view passes in via data-max-bytes (min of app cap and PHP limits).
     var upload = document.getElementById('imageUpload');
