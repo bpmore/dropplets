@@ -1,8 +1,8 @@
 # Spec: ActivityPub federation
 
-Status: proposed (June 2026). Written per the roadmap's 4.1 decision point,
-now that Phase 2 (tags, search, scheduling, feeds) has shipped. This is the
-largest feature ever considered for Fieldnote; the estimate and a
+Status: AP-1 shipped (June 2026) — followable but silent, pending the
+real-instance interop soak the recommendation calls for. AP-2 (post
+delivery) and AP-3 (polish) remain proposed; the estimate and the
 recommendation are at the end.
 
 ## Problem
