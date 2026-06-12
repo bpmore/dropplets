@@ -1,6 +1,6 @@
 <?php
 
-namespace Dropplets;
+namespace Fieldnote;
 
 /**
  * Minimal RFC 6238 TOTP / RFC 4226 HOTP implementation. Pure PHP, no

@@ -1,8 +1,8 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\dpl_post_url;
-use function Dropplets\dpl_excerpt;
-use function Dropplets\dpl_pagination;
+use function Fieldnote\e;
+use function Fieldnote\fn_post_url;
+use function Fieldnote\fn_excerpt;
+use function Fieldnote\fn_pagination;
 require __DIR__ . '/header.php';
 
 $dateFormat = i18n('dateformat', false);
@@ -17,12 +17,12 @@ $dateFormat = i18n('dateformat', false);
                 <span class="specimen-letter" aria-hidden="true"><?= e(mb_strtolower(mb_substr(trim($p['title']) !== '' ? trim($p['title']) : 'a', 0, 1))) ?></span>
                 <div class="specimen-body">
                     <h2 class="specimen-title">
-                        <a href="<?= e(dpl_post_url($router, $p)) ?>"><?= e($p['title']) ?></a>
+                        <a href="<?= e(fn_post_url($router, $p)) ?>"><?= e($p['title']) ?></a>
                     </h2>
                     <p class="specimen-meta"><?= e(date($dateFormat, (int) $p['date'])) ?> &middot; <?= e($p['author']) ?></p>
                     <?php if (!empty($p['password'])): ?>
                         <p class="specimen-text is-locked">&#128274; Locked in the chase &mdash; this proof requires a password.</p>
-                    <?php elseif (($x = dpl_excerpt($p, 150)) !== ''): ?>
+                    <?php elseif (($x = fn_excerpt($p, 150)) !== ''): ?>
                         <p class="specimen-text"><?= e($x) ?></p>
                     <?php endif; ?>
                 </div>
@@ -31,5 +31,5 @@ $dateFormat = i18n('dateformat', false);
     </div>
 <?php endif; ?>
 
-<?php dpl_pagination($router, $page, $numPages); ?>
+<?php fn_pagination($router, $page, $numPages); ?>
 <?php require __DIR__ . '/footer.php'; ?>

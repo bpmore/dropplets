@@ -1,5 +1,5 @@
 <?php
-use function Dropplets\e;
+use function Fieldnote\e;
 require __DIR__ . '/header.php';
 ?>
 <div class="center-page"><h1 class="display">404</h1><p>That page could not be found.</p>

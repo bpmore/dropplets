@@ -1,6 +1,6 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\csrf_field;
+use function Fieldnote\e;
+use function Fieldnote\csrf_field;
 
 $needsQr = ($setupSecret !== null); // footer loads the QR renderer only for setup
 require __DIR__ . '/header.php';

@@ -1,8 +1,8 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\dpl_post_url;
-use function Dropplets\dpl_pagination;
-use function Dropplets\dpl_excerpt;
+use function Fieldnote\e;
+use function Fieldnote\fn_post_url;
+use function Fieldnote\fn_pagination;
+use function Fieldnote\fn_excerpt;
 require __DIR__ . '/header.php';
 
 $dateFormat = i18n('dateformat', false);
@@ -24,12 +24,12 @@ $rest = array_slice($posts, 1);
         <?php endif; ?>
         <p class="kicker"><span class="kicker-flag">Latest</span> <?= e(date($dateFormat, (int) $lead['date'])) ?></p>
         <h2 class="lead-title">
-            <a href="<?= e(dpl_post_url($router, $lead)) ?>"><?= e($lead['title']) ?></a>
+            <a href="<?= e(fn_post_url($router, $lead)) ?>"><?= e($lead['title']) ?></a>
         </h2>
         <?php if (!empty($lead['password'])): ?>
             <p class="lead-meta">Protected dispatch</p>
         <?php else: ?>
-            <?php $excerpt = dpl_excerpt($lead); ?>
+            <?php $excerpt = fn_excerpt($lead); ?>
             <?php if ($excerpt !== ''): ?>
                 <p class="lead-excerpt"><?= e($excerpt) ?></p>
             <?php endif; ?>
@@ -43,7 +43,7 @@ $rest = array_slice($posts, 1);
                 <article class="row">
                     <p class="dateline"><?= e(date($dateFormat, (int) $p['date'])) ?></p>
                     <h2 class="row-title">
-                        <a href="<?= e(dpl_post_url($router, $p)) ?>"><?= e($p['title']) ?></a>
+                        <a href="<?= e(fn_post_url($router, $p)) ?>"><?= e($p['title']) ?></a>
                     </h2>
                     <?php if (!empty($p['password'])): ?>
                         <p class="byline"><span aria-hidden="true">&#128274;</span> Protected</p>
@@ -56,5 +56,5 @@ $rest = array_slice($posts, 1);
     <?php endif; ?>
 <?php endif; ?>
 
-<?php dpl_pagination($router, $page, $numPages); ?>
+<?php fn_pagination($router, $page, $numPages); ?>
 <?php require __DIR__ . '/footer.php'; ?>

@@ -1,6 +1,6 @@
 <?php
 
-namespace Dropplets;
+namespace Fieldnote;
 
 use SleekDB\Store;
 
@@ -38,8 +38,8 @@ $publishedCount = count($blogStore->findBy(['draft', '=', false]));
 $numPages = max(1, (int) ceil($publishedCount / $postsPerPage));
 
 $uploadPublicBase = rtrim((string) $siteConfig['domain'], '/') . '/uploads';
-$images = new ImageHandler(DPL_UPLOAD_DIR, $uploadPublicBase);
-$twoFactor = new TwoFactor(DPL_DATA_DIR);
+$images = new ImageHandler(FN_UPLOAD_DIR, $uploadPublicBase);
+$twoFactor = new TwoFactor(FN_DATA_DIR);
 
 $redirect = static function (string $name, array $params = []) use ($router): void {
     header('Location: ' . $router->generate($name, $params));
@@ -62,7 +62,7 @@ $notFound = static function (): void {
     http_response_code(404);
     global $siteConfig, $router, $pageTitle;
     $pageTitle = 'Not Found';
-    $tpl = dpl_template_dir($siteConfig['template']) . '/404.php';
+    $tpl = fn_template_dir($siteConfig['template']) . '/404.php';
     if (is_file($tpl)) {
         require $tpl;
     } else {
@@ -81,11 +81,11 @@ $router->map('GET', '/', function () use ($requireConfig, $siteConfig, $blogStor
     $page  = 1;
     $limit = $postsPerPage;
     $allPosts = array_map(
-        fn ($p) => dpl_with_image($p, $imageStore),
+        fn ($p) => fn_with_image($p, $imageStore),
         $blogStore->findBy(['draft', '=', false], ['date' => 'desc'], $postsPerPage)
     );
     $pageTitle = 'Home';
-    require dpl_template_dir($siteConfig['template']) . '/home.php';
+    require fn_template_dir($siteConfig['template']) . '/home.php';
 }, 'home');
 
 $router->map('GET', '/[i:page]', function ($page) use ($requireConfig, $siteConfig, $blogStore, $imageStore, $postsPerPage, $numPages, $router, $notFound) {
@@ -97,16 +97,16 @@ $router->map('GET', '/[i:page]', function ($page) use ($requireConfig, $siteConf
     $limit = $postsPerPage;
     $skip  = ($page - 1) * $postsPerPage;
     $allPosts = array_map(
-        fn ($p) => dpl_with_image($p, $imageStore),
+        fn ($p) => fn_with_image($p, $imageStore),
         $blogStore->findBy(['draft', '=', false], ['date' => 'desc'], $postsPerPage, $skip)
     );
     $pageTitle = 'Posts | Page ' . $page;
-    require dpl_template_dir($siteConfig['template']) . '/home.php';
+    require fn_template_dir($siteConfig['template']) . '/home.php';
 }, 'posts');
 
 // Legacy numeric URLs (/post/1) permanently redirect to the canonical
 // dated slug URL. Registered before the slug form so numeric paths match
-// here first; slugs are guaranteed never purely numeric (see dpl_slugify).
+// here first; slugs are guaranteed never purely numeric (see fn_slugify).
 $router->map('GET|POST', '/post/[i:id]', function ($id) use ($requireConfig, $blogStore, $router, $notFound) {
     $requireConfig();
     $post = $blogStore->findById((int) $id);
@@ -117,7 +117,7 @@ $router->map('GET|POST', '/post/[i:id]', function ($id) use ($requireConfig, $bl
     if (!empty($post['draft']) && !Security::isAuthenticated()) {
         $notFound();
     }
-    header('Location: ' . dpl_post_url($router, $post), true, 301);
+    header('Location: ' . fn_post_url($router, $post), true, 301);
     exit;
 }, 'postById');
 
@@ -131,7 +131,7 @@ $router->map('GET|POST', '/post/[:slug]', function ($slug) use ($requireConfig, 
     if (!empty($post['draft']) && !Security::isAuthenticated()) {
         $notFound();
     }
-    header('Location: ' . dpl_post_url($router, $post), true, 301);
+    header('Location: ' . fn_post_url($router, $post), true, 301);
     exit;
 }, 'postBySlug');
 
@@ -149,7 +149,7 @@ $router->map('GET|POST', '/[i:year]/[i:month]/[:slug]', function ($year, $month,
 
     // Wrong or unpadded date segments 301 to the canonical URL so each post
     // has exactly one address.
-    $canonical = dpl_post_url($router, $post);
+    $canonical = fn_post_url($router, $post);
     $requested = $router->generate('post', ['year' => $year, 'month' => $month, 'slug' => $slug]);
     if ($requested !== $canonical) {
         header('Location: ' . $canonical, true, 301);
@@ -166,14 +166,14 @@ $router->map('GET|POST', '/[i:year]/[i:month]/[:slug]', function ($year, $month,
         $unlocked = $attempt !== '' && password_verify($attempt, $hash);
     }
 
-    $post = dpl_with_image($post, $imageStore);
+    $post = fn_with_image($post, $imageStore);
 
     if ($unlocked) {
         $pageTitle = $post['title'];
-        require dpl_template_dir($siteConfig['template']) . '/post.php';
+        require fn_template_dir($siteConfig['template']) . '/post.php';
     } else {
         $pageTitle = 'Private post';
-        require DPL_INTERNAL_DIR . '/private.php';
+        require FN_INTERNAL_DIR . '/private.php';
     }
 }, 'post');
 
@@ -192,7 +192,7 @@ $router->map('GET', '/themes/[:theme]/[**:file]', function ($theme, $file) use (
     if (!isset($types[$ext])) {
         $notFound();
     }
-    $assetsDir = realpath(DPL_TEMPLATES_DIR . '/' . basename((string) $theme) . '/assets');
+    $assetsDir = realpath(FN_TEMPLATES_DIR . '/' . basename((string) $theme) . '/assets');
     $path      = $assetsDir === false ? false : realpath($assetsDir . '/' . $file);
     if ($assetsDir === false || $path === false || !str_starts_with($path, $assetsDir . '/') || !is_file($path)) {
         $notFound();
@@ -221,7 +221,7 @@ $router->map('GET', '/feed', function () use ($requireConfig, $siteConfig, $blog
     header('Content-Type: application/rss+xml; charset=utf-8');
     echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
     echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel>' . "\n";
-    echo '<title>' . $xml($siteConfig['name'] ?: 'Dropplets') . '</title>' . "\n";
+    echo '<title>' . $xml($siteConfig['name'] ?: 'Fieldnote') . '</title>' . "\n";
     echo '<link>' . $xml($base . $router->generate('home')) . '</link>' . "\n";
     echo '<description>' . $xml($siteConfig['info']) . '</description>' . "\n";
     echo '<atom:link href="' . $xml($base . $router->generate('feed')) . '" rel="self" type="application/rss+xml"/>' . "\n";
@@ -232,7 +232,7 @@ $router->map('GET', '/feed', function () use ($requireConfig, $siteConfig, $blog
         if (!empty($post['password'])) {
             continue;
         }
-        $url = $base . dpl_post_url($router, $post);
+        $url = $base . fn_post_url($router, $post);
         echo '<item>' . "\n";
         echo '<title>' . $xml($post['title']) . '</title>' . "\n";
         echo '<link>' . $xml($url) . '</link>' . "\n";
@@ -309,18 +309,18 @@ $router->map('GET|POST', '/post/[i:id]/edit', function ($id) use ($requireConfig
         if (!isset($_POST['blogPostTitle'], $_POST['blogPostContent'], $_POST['blogPostAuthor'])) {
             $redirect('editPost', ['id' => $id]);
         }
-        $newTitle = dpl_clean($_POST['blogPostTitle']);
+        $newTitle = fn_clean($_POST['blogPostTitle']);
         // Re-slug when the title changes (or when a pre-slug post is saved).
         if ($newTitle !== ($post['title'] ?? '') || empty($post['slug'])) {
-            $post['slug'] = dpl_unique_slug($blogStore, $newTitle, (int) $id);
+            $post['slug'] = fn_unique_slug($blogStore, $newTitle, (int) $id);
         }
         $post['title']   = $newTitle;
-        $post['author']  = dpl_clean($_POST['blogPostAuthor']);
+        $post['author']  = fn_clean($_POST['blogPostAuthor']);
         $post['content'] = (string) $_POST['blogPostContent']; // markdown stored raw, escaped at render
-        $post['password'] = dpl_hash_post_password($_POST['blogPostPassword'] ?? '', $post['password'] ?? '');
+        $post['password'] = fn_hash_post_password($_POST['blogPostPassword'] ?? '', $post['password'] ?? '');
 
         // Replace the image only if a new upload or URL was supplied.
-        $newImage = dpl_resolve_image($images, $_FILES['imageUpload'] ?? null, $_POST['blogPostImageURL'] ?? '');
+        $newImage = fn_resolve_image($images, $_FILES['imageUpload'] ?? null, $_POST['blogPostImageURL'] ?? '');
         if ($newImage !== null) {
             $rec = $imageStore->insert(['url' => $newImage[0], 'path' => $newImage[1]]);
             $post['image'] = $rec['_id'];
@@ -330,9 +330,9 @@ $router->map('GET|POST', '/post/[i:id]/edit', function ($id) use ($requireConfig
         $redirect('dashboard');
     }
 
-    $post = dpl_with_image($post, $imageStore);
+    $post = fn_with_image($post, $imageStore);
     $pageTitle = 'Edit Post';
-    require DPL_INTERNAL_DIR . '/write.php';
+    require FN_INTERNAL_DIR . '/write.php';
 }, 'editPost');
 
 $router->map('GET|POST', '/write', function () use ($requireConfig, $requireAuth, $siteConfig, $blogStore, $imageStore, $images, $router, $redirect) {
@@ -343,18 +343,18 @@ $router->map('GET|POST', '/write', function () use ($requireConfig, $requireAuth
         if (!isset($_POST['blogPostTitle'], $_POST['blogPostContent'], $_POST['blogPostAuthor'])) {
             $redirect('write');
         }
-        $title = dpl_clean($_POST['blogPostTitle']);
+        $title = fn_clean($_POST['blogPostTitle']);
         $post = [
             'title'    => $title,
-            'slug'     => dpl_unique_slug($blogStore, $title),
+            'slug'     => fn_unique_slug($blogStore, $title),
             'date'     => time(),
             'draft'    => true,
-            'author'   => dpl_clean($_POST['blogPostAuthor']),
+            'author'   => fn_clean($_POST['blogPostAuthor']),
             'content'  => (string) $_POST['blogPostContent'],
-            'password' => dpl_hash_post_password($_POST['blogPostPassword'] ?? '', ''),
+            'password' => fn_hash_post_password($_POST['blogPostPassword'] ?? '', ''),
         ];
 
-        $image = dpl_resolve_image($images, $_FILES['imageUpload'] ?? null, $_POST['blogPostImageURL'] ?? '');
+        $image = fn_resolve_image($images, $_FILES['imageUpload'] ?? null, $_POST['blogPostImageURL'] ?? '');
         if ($image !== null) {
             $rec = $imageStore->insert(['url' => $image[0], 'path' => $image[1]]);
             $post['image'] = $rec['_id'];
@@ -365,7 +365,7 @@ $router->map('GET|POST', '/write', function () use ($requireConfig, $requireAuth
     }
 
     $pageTitle = 'Write';
-    require DPL_INTERNAL_DIR . '/write.php';
+    require FN_INTERNAL_DIR . '/write.php';
 }, 'write');
 
 // ---------------------------------------------------------------------------
@@ -404,21 +404,21 @@ $router->map('GET|POST', '/settings', function () use ($configStore, $siteConfig
         }
 
         $new = [
-            'name'         => dpl_clean($_POST['blogName']),
-            'info'         => dpl_clean($_POST['blogInfo'] ?? ''),
-            'author'       => dpl_clean($_POST['blogAuthor'] ?? ''),
-            'domain'       => dpl_clean_url($_POST['blogDomain']),
-            'OGImage'      => dpl_clean($_POST['blogOGImage'] ?? ''),
-            'footer'       => dpl_clean($_POST['blogFooter'] ?? ''),
+            'name'         => fn_clean($_POST['blogName']),
+            'info'         => fn_clean($_POST['blogInfo'] ?? ''),
+            'author'       => fn_clean($_POST['blogAuthor'] ?? ''),
+            'domain'       => fn_clean_url($_POST['blogDomain']),
+            'OGImage'      => fn_clean($_POST['blogOGImage'] ?? ''),
+            'footer'       => fn_clean($_POST['blogFooter'] ?? ''),
             // headerInject is intentional raw markup (analytics snippets), only
             // ever writable by an authenticated admin and now CSRF-protected.
             'headerInject' => (string) ($_POST['blogHeaderInject'] ?? ''),
             'password'     => $password,
-            'template'     => basename(dpl_clean($_POST['blogTemplate'])),
+            'template'     => basename(fn_clean($_POST['blogTemplate'])),
             'postsPerPage' => $postsPerPage,
-            'basePath'     => dpl_clean($_POST['blogBase'] ?? ''),
-            'timezone'     => dpl_clean($_POST['blogTimezone']),
-            'I18N'         => dpl_clean($_POST['blogI18N']),
+            'basePath'     => fn_clean($_POST['blogBase'] ?? ''),
+            'timezone'     => fn_clean($_POST['blogTimezone']),
+            'I18N'         => fn_clean($_POST['blogI18N']),
         ];
 
         if (!$configStore->save($new)) {
@@ -435,7 +435,7 @@ $router->map('GET|POST', '/settings', function () use ($configStore, $siteConfig
     }
 
     $pageTitle = 'Settings';
-    require DPL_INTERNAL_DIR . '/settings.php';
+    require FN_INTERNAL_DIR . '/settings.php';
 }, 'settings');
 
 $router->map('GET|POST', '/login', function () use ($configStore, $siteConfig, $twoFactor, $router, $redirect) {
@@ -448,7 +448,7 @@ $router->map('GET|POST', '/login', function () use ($configStore, $siteConfig, $
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $lockedFor = Security::loginLockedFor(DPL_DATA_DIR);
+        $lockedFor = Security::loginLockedFor(FN_DATA_DIR);
         if ($lockedFor > 0) {
             $_SESSION['login_error'] = sprintf(
                 'Too many failed attempts. Try again in about %d minute%s.',
@@ -468,12 +468,12 @@ $router->map('GET|POST', '/login', function () use ($configStore, $siteConfig, $
                 $_SESSION['pending_2fa'] = time();
                 $redirect('loginVerify');
             }
-            Security::clearLoginFailures(DPL_DATA_DIR);
+            Security::clearLoginFailures(FN_DATA_DIR);
             $_SESSION['isAuthenticated'] = true;
             $redirect('dashboard');
         }
         // Generic failure: do not reveal whether the password was close.
-        Security::recordLoginFailure(DPL_DATA_DIR);
+        Security::recordLoginFailure(FN_DATA_DIR);
         $_SESSION['login_error'] = 'That password was not correct.';
         $redirect('login');
     }
@@ -481,7 +481,7 @@ $router->map('GET|POST', '/login', function () use ($configStore, $siteConfig, $
     $pageTitle = 'Log In';
     $loginError = $_SESSION['login_error'] ?? '';
     unset($_SESSION['login_error']);
-    require DPL_INTERNAL_DIR . '/login.php';
+    require FN_INTERNAL_DIR . '/login.php';
 }, 'login');
 
 $router->map('GET|POST', '/login/verify', function () use ($twoFactor, $router, $redirect) {
@@ -496,7 +496,7 @@ $router->map('GET|POST', '/login/verify', function () use ($twoFactor, $router, 
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $lockedFor = Security::loginLockedFor(DPL_DATA_DIR);
+        $lockedFor = Security::loginLockedFor(FN_DATA_DIR);
         if ($lockedFor > 0) {
             $_SESSION['login_error'] = sprintf(
                 'Too many failed attempts. Try again in about %d minute%s.',
@@ -509,12 +509,12 @@ $router->map('GET|POST', '/login/verify', function () use ($twoFactor, $router, 
         $code = (string) ($_POST['code'] ?? '');
         if ($twoFactor->verifyTotp($code) || $twoFactor->useRecoveryCode($code)) {
             unset($_SESSION['pending_2fa']);
-            Security::clearLoginFailures(DPL_DATA_DIR);
+            Security::clearLoginFailures(FN_DATA_DIR);
             Security::regenerate();
             $_SESSION['isAuthenticated'] = true;
             $redirect('dashboard');
         }
-        Security::recordLoginFailure(DPL_DATA_DIR);
+        Security::recordLoginFailure(FN_DATA_DIR);
         $_SESSION['login_error'] = 'That code was not correct.';
         $redirect('loginVerify');
     }
@@ -522,7 +522,7 @@ $router->map('GET|POST', '/login/verify', function () use ($twoFactor, $router, 
     $pageTitle = 'Verify';
     $loginError = $_SESSION['login_error'] ?? '';
     unset($_SESSION['login_error']);
-    require DPL_INTERNAL_DIR . '/verify2fa.php';
+    require FN_INTERNAL_DIR . '/verify2fa.php';
 }, 'loginVerify');
 
 $router->map('GET|POST', '/settings/2fa', function () use ($requireConfig, $requireAuth, $siteConfig, $twoFactor, $router, $redirect) {
@@ -573,10 +573,10 @@ $router->map('GET|POST', '/settings/2fa', function () use ($requireConfig, $requ
             $_SESSION['totp_setup_secret'] = Totp::generateSecret();
         }
         $setupSecret = (string) $_SESSION['totp_setup_secret'];
-        $otpauthUri  = Totp::otpauthUri($setupSecret, 'admin', $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Dropplets');
+        $otpauthUri  = Totp::otpauthUri($setupSecret, 'admin', $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Fieldnote');
     }
 
-    require DPL_INTERNAL_DIR . '/twofactor.php';
+    require FN_INTERNAL_DIR . '/twofactor.php';
 }, 'twofactor');
 
 $router->map('POST', '/logout', function () use ($redirect) {
@@ -597,7 +597,7 @@ $router->map('GET', '/dashboard', function () use ($requireConfig, $requireAuth,
     $draftPostCount     = count($draftPosts);
     $publishedPostCount = count($publishedPosts);
     $pageTitle = 'Dashboard';
-    require DPL_INTERNAL_DIR . '/dashboard.php';
+    require FN_INTERNAL_DIR . '/dashboard.php';
 }, 'dashboard');
 
 // ---------------------------------------------------------------------------
@@ -639,9 +639,9 @@ if (is_array($match) && is_callable($match['target'])) {
 /**
  * Normalize a plain-text field on the way IN: trim and strip control bytes.
  * We do NOT HTML-encode at input (the original did, which double-encoded and
- * mixed contexts). Encoding happens at output via Dropplets\e().
+ * mixed contexts). Encoding happens at output via Fieldnote\e().
  */
-function dpl_clean(string $value): string
+function fn_clean(string $value): string
 {
     $value = trim($value);
     return preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value) ?? $value;
@@ -651,7 +651,7 @@ function dpl_clean(string $value): string
  * Accept only an absolute http/https URL; anything else becomes the empty
  * string (the app then falls back to host-relative links).
  */
-function dpl_clean_url(string $value): string
+function fn_clean_url(string $value): string
 {
     $value = trim($value);
     if (
@@ -666,7 +666,7 @@ function dpl_clean_url(string $value): string
 /**
  * Hash a per-post password, or keep the existing hash when the field is blank.
  */
-function dpl_hash_post_password(string $submitted, string $existingHash): string
+function fn_hash_post_password(string $submitted, string $existingHash): string
 {
     $submitted = trim($submitted);
     if ($submitted === '') {
@@ -681,7 +681,7 @@ function dpl_hash_post_password(string $submitted, string $existingHash): string
  * @param array{name:string,tmp_name:string,size:int,error:int}|null $file
  * @return array{0:string,1:string}|null
  */
-function dpl_resolve_image(ImageHandler $images, ?array $file, string $url): ?array
+function fn_resolve_image(ImageHandler $images, ?array $file, string $url): ?array
 {
     if ($file !== null && ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK && ($file['name'] ?? '') !== '') {
         return $images->storeUpload($file);

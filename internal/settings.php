@@ -1,6 +1,6 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\csrf_field;
+use function Fieldnote\e;
+use function Fieldnote\csrf_field;
 require __DIR__ . '/header.php';
 $isNew = ($siteConfig['name'] === '');
 ?>
@@ -48,7 +48,7 @@ $isNew = ($siteConfig['name'] === '');
                 <small class="text-muted">Raw HTML, inserted into every page head. Only use trusted snippets (for example, analytics).</small>
                 <label><?php i18n("settings_template"); ?></label>
                 <select class="form-select" name="blogTemplate" required>
-                    <?php foreach (Dropplets\dpl_template_names() as $tplName): ?>
+                    <?php foreach (Fieldnote\fn_template_names() as $tplName): ?>
                         <option value="<?= e($tplName) ?>" <?= $siteConfig['template'] === $tplName ? 'selected' : '' ?>><?= e($tplName) ?></option>
                     <?php endforeach; ?>
                 </select>
@@ -59,7 +59,7 @@ $isNew = ($siteConfig['name'] === '');
                 <label><?php i18n("settings_basepath"); ?></label>
                 <input class="form-control" type="text" name="blogBase" value="<?= e($siteConfig['basePath']) ?>" />
             </fieldset>
-            <?php if (Dropplets\Security::isAuthenticated() && !$isNew): ?>
+            <?php if (Fieldnote\Security::isAuthenticated() && !$isNew): ?>
                 <fieldset class="my-3">
                     <legend class="fs-6">Two-factor login</legend>
                     <p class="mb-2">
@@ -70,7 +70,7 @@ $isNew = ($siteConfig['name'] === '');
                     </p>
                 </fieldset>
             <?php endif; ?>
-            <?php if (!Dropplets\Security::isAuthenticated() || !$isNew): ?>
+            <?php if (!Fieldnote\Security::isAuthenticated() || !$isNew): ?>
                 <fieldset class="my-3">
                     <?php if ($isNew): ?>
                         <legend><?php i18n("settings_password_legend"); ?></legend>

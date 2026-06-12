@@ -1,7 +1,7 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\dpl_post_url;
-use function Dropplets\dpl_pagination;
+use function Fieldnote\e;
+use function Fieldnote\fn_post_url;
+use function Fieldnote\fn_pagination;
 require __DIR__ . '/header.php';
 
 $dateFormat = i18n('dateformat', false);
@@ -16,7 +16,7 @@ $dateFormat = i18n('dateformat', false);
                 <p class="route-marker"><?= e(date($dateFormat, (int) $p['date'])) ?></p>
                 <div class="route-body">
                     <h2 class="route-title">
-                        <a href="<?= e(dpl_post_url($router, $p)) ?>"><?= e($p['title']) ?></a>
+                        <a href="<?= e(fn_post_url($router, $p)) ?>"><?= e($p['title']) ?></a>
                     </h2>
                     <?php if (!empty($p['password'])): ?>
                         <p class="route-meta"><span aria-hidden="true">&#128274;</span> Restricted route &middot; permit required</p>
@@ -29,5 +29,5 @@ $dateFormat = i18n('dateformat', false);
     </div>
 <?php endif; ?>
 
-<?php dpl_pagination($router, $page, $numPages); ?>
+<?php fn_pagination($router, $page, $numPages); ?>
 <?php require __DIR__ . '/footer.php'; ?>

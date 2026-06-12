@@ -1,4 +1,4 @@
-/* Dropplets admin styles. System font stack: no webfont request. */
+/* Fieldnote admin styles. System font stack: no webfont request. */
 
 /* ========== General ========== */
 body {
@@ -41,7 +41,7 @@ span.headerLogo {
     vertical-align: sub;
 }
 
-span.droppletsName {
+span.fieldnoteName {
     padding-left: 12px;
 }
 

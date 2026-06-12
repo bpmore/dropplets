@@ -1,16 +1,16 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\dpl_render_head;
-use function Dropplets\dpl_skip_link;
-$siteName = $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Dropplets';
+use function Fieldnote\e;
+use function Fieldnote\fn_render_head;
+use function Fieldnote\fn_skip_link;
+$siteName = $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Fieldnote';
 ?>
 <!doctype html>
 <html lang="en">
 <head>
-<?php dpl_render_head($siteConfig, $router, $pageTitle ?? '', $post ?? null, $router->generate('themeAsset', ['theme' => 'gazette', 'file' => 'theme.css'])); ?>
+<?php fn_render_head($siteConfig, $router, $pageTitle ?? '', $post ?? null, $router->generate('themeAsset', ['theme' => 'gazette', 'file' => 'theme.css'])); ?>
 </head>
 <body>
-<?php dpl_skip_link(); ?>
+<?php fn_skip_link(); ?>
 <header class="masthead">
     <p class="dateline"><?= e(date(i18n('dateformat', false))) ?></p>
     <div class="site-title-wrap"><a class="site-title" href="<?= e($router->generate('home')) ?>"><?= e($siteName) ?></a></div>

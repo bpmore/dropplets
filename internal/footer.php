@@ -1,4 +1,4 @@
-<?php use function Dropplets\e; ?>
+<?php use function Fieldnote\e; ?>
     </div>
     <?php if (!empty($needsEditor)): ?>
         <script src="<?= e($siteConfig['basePath']) ?>/static/vendor/easymde.min.js" defer></script>

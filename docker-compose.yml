@@ -1,5 +1,5 @@
 services:
-  dropplets:
+  fieldnote:
     build: .
     ports:
       - "8080:80"

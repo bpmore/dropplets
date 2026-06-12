@@ -12,9 +12,9 @@
  *        - color-scheme declared
  *        - no color literals outside the two token blocks
  *        - no outline:none / outline:0
- *   PHP  - header.php calls dpl_skip_link() and marks id="main"
- *        - home.php calls dpl_pagination()
- *        - post.php calls dpl_image_alt()
+ *   PHP  - header.php calls fn_skip_link() and marks id="main"
+ *        - home.php calls fn_pagination()
+ *        - post.php calls fn_image_alt()
  *        - exactly one <h1> per rendered page (header+home, header+post, header+404)
  *
  * Exit code 0 = all green, 1 = failures.
@@ -231,17 +231,17 @@ foreach ($themes as $name => $dir) {
     $post   = (string) @file_get_contents($dir . '/post.php');
     $nf     = (string) @file_get_contents($dir . '/404.php');
 
-    if (!str_contains($header, 'dpl_skip_link(')) {
-        $problems[] = 'header.php missing dpl_skip_link()';
+    if (!str_contains($header, 'fn_skip_link(')) {
+        $problems[] = 'header.php missing fn_skip_link()';
     }
     if (!str_contains($header, 'id="main"')) {
         $problems[] = 'header.php missing id="main" on main element';
     }
-    if (!str_contains($home, 'dpl_pagination(')) {
-        $problems[] = 'home.php missing dpl_pagination()';
+    if (!str_contains($home, 'fn_pagination(')) {
+        $problems[] = 'home.php missing fn_pagination()';
     }
-    if (str_contains($post, 'imageUrl') && !str_contains($post, 'dpl_image_alt(')) {
-        $problems[] = 'post.php missing dpl_image_alt() on hero image';
+    if (str_contains($post, 'imageUrl') && !str_contains($post, 'fn_image_alt(')) {
+        $problems[] = 'post.php missing fn_image_alt() on hero image';
     }
 
     // Exactly one h1 per rendered page type.

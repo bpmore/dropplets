@@ -1,7 +1,7 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\dpl_post_url;
-use function Dropplets\dpl_pagination;
+use function Fieldnote\e;
+use function Fieldnote\fn_post_url;
+use function Fieldnote\fn_pagination;
 require __DIR__ . '/header.php';
 
 $dateFormat = i18n('dateformat', false);
@@ -15,7 +15,7 @@ $dateFormat = i18n('dateformat', false);
         <ol class="toc-list">
             <?php foreach ($allPosts as $p): ?>
                 <li class="toc-row">
-                    <a class="toc-link" href="<?= e(dpl_post_url($router, $p)) ?>">
+                    <a class="toc-link" href="<?= e(fn_post_url($router, $p)) ?>">
                         <span class="toc-title">
                             <?php if (!empty($p['password'])): ?>
                                 <span class="toc-lock" aria-hidden="true">&#128274;</span>
@@ -36,5 +36,5 @@ $dateFormat = i18n('dateformat', false);
     <?php endif; ?>
 </section>
 
-<?php dpl_pagination($router, $page, $numPages); ?>
+<?php fn_pagination($router, $page, $numPages); ?>
 <?php require __DIR__ . '/footer.php'; ?>

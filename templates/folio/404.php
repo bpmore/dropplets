@@ -1,5 +1,5 @@
 <?php
-use function Dropplets\e;
+use function Fieldnote\e;
 require __DIR__ . '/header.php';
 ?>
 <div class="errata">

@@ -1,6 +1,6 @@
 <?php
 
-namespace Dropplets;
+namespace Fieldnote;
 
 /**
  * Optional TOTP second factor for the admin login.
@@ -116,7 +116,7 @@ final class TwoFactor
     private function save(array $data): bool
     {
         // _comment is for the admin reading the file over SSH.
-        $data = ['_comment' => 'Dropplets two-factor state. Delete this file to '
+        $data = ['_comment' => 'Fieldnote two-factor state. Delete this file to '
             . 'fall back to password-only login (lost-authenticator recovery).'] + $data;
 
         $tmp = $this->file . '.' . bin2hex(random_bytes(6)) . '.tmp';

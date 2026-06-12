@@ -1,4 +1,4 @@
-<?php use function Dropplets\e; ?>
+<?php use function Fieldnote\e; ?>
     </main>
     <footer class="site-footer">
         <?php if (!empty($siteConfig['footer'])): ?>

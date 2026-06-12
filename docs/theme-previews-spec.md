@@ -33,7 +33,7 @@ A new auth-gated route renders the real homepage through any installed
 theme. The admin "Themes" page shows a card grid; each card embeds that
 route in a scaled-down `<iframe>`. Previews are therefore always truthful —
 they render the blog's actual posts through the theme's actual code — and
-new theme folders show up automatically via `dpl_template_names()`.
+new theme folders show up automatically via `fn_template_names()`.
 
 Rejected alternative: pre-generated PNG thumbnails per theme. Requires a
 generation step (headless browser dependency), goes stale when posts or
@@ -50,10 +50,10 @@ POST /admin/themes/apply               -> set config['template'] (auth + CSRF)
 ```
 
 - `requireConfig()` + `requireAuth()` on all three, same as `/dashboard`.
-- `[:theme]` validated with the existing `dpl_template_dir()` (basename +
+- `[:theme]` validated with the existing `fn_template_dir()` (basename +
   exists check) — unknown names 404, no traversal surface.
 - The preview route reuses the home route's body (extract a small
-  `dpl_render_home(string $templateDir)` helper from the `/` closure so the
+  `fn_render_home(string $templateDir)` helper from the `/` closure so the
   two stay in lockstep), with two differences:
   - `$postsPerPage` capped at 3 — previews only need a taste, and the page
     weight of 70 iframes × full grid matters
@@ -71,7 +71,7 @@ overrides them in exactly one `@media (prefers-color-scheme: …)` block.
 For `?scheme=dark` (or `?scheme=light` on dark-identity themes), the
 preview route extracts the override block's `:root` body from the theme's
 `theme.css` (same parser as `bin/audit-themes.php` — hoist `rootBlock()` /
-`schemeBlock()` into a shared `Dropplets\CssTokens` helper so the auditor
+`schemeBlock()` into a shared `Fieldnote\CssTokens` helper so the auditor
 and the preview use one implementation) and emits it after the stylesheet
 link as:
 
@@ -86,7 +86,7 @@ flip — acceptable for a preview, and worth a one-line note in
 templates/README.md encouraging themes to keep scheme differences inside
 the token block.
 
-Implementation detail: `dpl_render_head()` gains an optional
+Implementation detail: `fn_render_head()` gains an optional
 `?string $schemeOverrideCss = null` parameter (default null = current
 behavior, zero impact on existing themes).
 
@@ -94,7 +94,7 @@ behavior, zero impact on existing themes).
 
 New admin view, linked from the dashboard nav next to Settings:
 
-- One card per `dpl_template_names()` entry: theme name, current-theme
+- One card per `fn_template_names()` entry: theme name, current-theme
   badge, two scaled iframes (light + dark) side by side, and an Apply
   button (POST + CSRF, identical pattern to the publish/hide forms)
 - Iframe scaling: fixed-size card (e.g. 320×240) containing an iframe
@@ -113,7 +113,7 @@ New admin view, linked from the dashboard nav next to Settings:
 ### Apply flow
 
 `POST /admin/themes/apply` with `theme` + CSRF token → validate via
-`dpl_template_dir()` → `$configStore` write of `template` key (reuse the
+`fn_template_dir()` → `$configStore` write of `template` key (reuse the
 settings handler's persistence path) → redirect back to `/admin/themes`
 with the new current-theme badge. No "preview as live" mode; applying is
 explicit.
@@ -124,7 +124,7 @@ explicit.
   (it renders drafts? No — it reuses the public home query, published
   posts only, but the route stays admin-only anyway to avoid enumeration
   and resource abuse)
-- Theme name input crosses two validators: route regex + `dpl_template_dir()`
+- Theme name input crosses two validators: route regex + `fn_template_dir()`
 - CSS override injection embeds file content from `templates/<name>/assets/
   theme.css` only — admin-controlled files already served verbatim by the
   asset route; no user input is interpolated into the `<style>` block
@@ -147,8 +147,8 @@ explicit.
 
 1. Hoist CSS token-block parser out of `bin/audit-themes.php` into
    `src/CssTokens.php`; auditor consumes it (behavior unchanged)
-2. Extract `dpl_render_home()` from the `/` route closure
-3. Preview route + scheme override in `dpl_render_head()`
+2. Extract `fn_render_home()` from the `/` route closure
+3. Preview route + scheme override in `fn_render_head()`
 4. Gallery view + dashboard nav link
 5. Apply route
 6. Verification: acceptance criteria above + live sweep script

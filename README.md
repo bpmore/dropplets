@@ -1,6 +1,6 @@
-# Dropplets 3.0
+# Fieldnote 3.0
 
-A minimalist markdown blogging platform. This is a modernized, security-hardened fork of [johnroper100/dropplets](https://github.com/johnroper100/dropplets) (which was itself a continuation of the original Dropplets).
+A minimalist markdown blogging platform, formerly known as Dropplets. This is a modernized, security-hardened, and renamed fork of [johnroper100/dropplets](https://github.com/johnroper100/dropplets) (which was itself a continuation of the original Dropplets).
 
 No database, flat-file posts, a single password to manage everything, and a simple template system. The goals of the original are unchanged; the internals are rebuilt for PHP 8 and current security practice.
 
@@ -12,8 +12,8 @@ No database, flat-file posts, a single password to manage everything, and a simp
 ## Get going
 
 ```
-git clone https://github.com/bpmore/dropplets.git
-cd dropplets
+git clone https://github.com/bpmore/fieldnote.git
+cd fieldnote
 composer install
 ```
 
@@ -59,7 +59,7 @@ An RSS feed of published posts is available at `/feed`.
 
 ```
 public/        <- web root (index.php, static/, uploads/, .htaccess)
-src/           <- application code (PSR-4, namespace Dropplets\)
+src/           <- application code (PSR-4, namespace Fieldnote\)
 internal/      <- admin views (login, dashboard, write, settings)
 templates/     <- front-end themes; liquid-new ships by default
 data/          <- config.php and siteDatabase/ (NOT web-accessible)
@@ -180,10 +180,10 @@ A template is a folder under `templates/` with two required files:
 - `post.php` displays a single post
 
 Static files (CSS, images, fonts) go in an `assets/` subfolder, served at
-`/themes/<name>/<file>`. Call `Dropplets\dpl_render_head()` from your
+`/themes/<name>/<file>`. Call `Fieldnote\fn_render_head()` from your
 `header.php` to get all SEO/social meta for free, and
-`Dropplets\dpl_post_url($router, $post)` for canonical post links.
-`Dropplets\dpl_excerpt($post)` gives a safe plain-text excerpt (it returns ''
+`Fieldnote\fn_post_url($router, $post)` for canonical post links.
+`Fieldnote\fn_excerpt($post)` gives a safe plain-text excerpt (it returns ''
 for password-protected posts).
 
 These variables are available:
@@ -195,7 +195,7 @@ These variables are available:
 - `$post` is the single post array (on `post.php`, also with `imageUrl`)
 - `$router` is the AltoRouter instance for generating URLs
 
-Always escape user-controlled values in templates with `Dropplets\e()`, and render post bodies through Parsedown in safe mode (see the shipped `liquid-new/post.php` for the pattern). A `404.php` in the template is optional and used for not-found pages.
+Always escape user-controlled values in templates with `Fieldnote\e()`, and render post bodies through Parsedown in safe mode (see the shipped `liquid-new/post.php` for the pattern). A `404.php` in the template is optional and used for not-found pages.
 
 ## Security
 

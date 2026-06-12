@@ -1,8 +1,8 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\dpl_post_url;
-use function Dropplets\dpl_excerpt;
-use function Dropplets\dpl_pagination;
+use function Fieldnote\e;
+use function Fieldnote\fn_post_url;
+use function Fieldnote\fn_excerpt;
+use function Fieldnote\fn_pagination;
 require __DIR__ . '/header.php';
 
 $dateFormat = i18n('dateformat', false);
@@ -15,12 +15,12 @@ $dateFormat = i18n('dateformat', false);
         <?php foreach ($allPosts as $p): ?>
             <article class="folio-entry">
                 <h2 class="folio-title">
-                    <a href="<?= e(dpl_post_url($router, $p)) ?>"><?= e($p['title']) ?></a>
+                    <a href="<?= e(fn_post_url($router, $p)) ?>"><?= e($p['title']) ?></a>
                 </h2>
                 <p class="folio-rubric"><?= e(date($dateFormat, (int) $p['date'])) ?> &middot; <?= e($p['author']) ?></p>
                 <?php if (!empty($p['password'])): ?>
                     <p class="folio-text is-locked">&#128274; This folio is sealed; a password is required to break the wax.</p>
-                <?php elseif (($x = dpl_excerpt($p, 160)) !== ''): ?>
+                <?php elseif (($x = fn_excerpt($p, 160)) !== ''): ?>
                     <p class="folio-text"><?= e($x) ?></p>
                 <?php endif; ?>
             </article>
@@ -28,5 +28,5 @@ $dateFormat = i18n('dateformat', false);
     </div>
 <?php endif; ?>
 
-<?php dpl_pagination($router, $page, $numPages); ?>
+<?php fn_pagination($router, $page, $numPages); ?>
 <?php require __DIR__ . '/footer.php'; ?>

@@ -1,4 +1,4 @@
-<?php use function Dropplets\e; ?>
+<?php use function Fieldnote\e; ?>
     </main>
     <div class="squiggle squiggle-foot" aria-hidden="true"></div>
     <footer class="site-footer">

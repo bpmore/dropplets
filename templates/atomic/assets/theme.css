@@ -1,4 +1,4 @@
-/* Dropplets "atomic" theme — 50s mid-century googie.
+/* Fieldnote "atomic" theme — 50s mid-century googie.
  Starbursts, boomerang card blobs, satellite-dot markers, script masthead. */
 
 :root { color-scheme: light dark; --bg: #faf5ec; --surface: #ffffff; --text: #29282f; --muted: #5b5963; --accent: #07635d; --accent-contrast: #ffffff; --line: #8e887b; --focus: #07635d; --turquoise: #2fa9a2; --flamingo: #f1808a; --mustard: #e0a52e; --blob: #f3ece0; }

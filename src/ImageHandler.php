@@ -1,6 +1,6 @@
 <?php
 
-namespace Dropplets;
+namespace Fieldnote;
 
 /**
  * Handles featured images for posts: validated file uploads and SSRF-safe
@@ -84,7 +84,7 @@ final class ImageHandler
             CURLOPT_PROGRESSFUNCTION => static fn ($c, $dlTotal, $dlNow) => ($dlNow > self::MAX_BYTES) ? 1 : 0,
             CURLOPT_PROTOCOLS      => CURLPROTO_HTTP | CURLPROTO_HTTPS,
             CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_USERAGENT      => 'Dropplets/3.0 image fetcher',
+            CURLOPT_USERAGENT      => 'Fieldnote/3.0 image fetcher',
         ]);
         $ok   = curl_exec($ch);
         $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);

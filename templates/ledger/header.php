@@ -1,16 +1,16 @@
 <?php
 
-use function Dropplets\e;
-use function Dropplets\dpl_render_head;
-use function Dropplets\dpl_skip_link;
+use function Fieldnote\e;
+use function Fieldnote\fn_render_head;
+use function Fieldnote\fn_skip_link;
 
-$siteName = $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Dropplets';
+$siteName = $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Fieldnote';
 ?>
 <!doctype html>
 <html lang="en">
 
 <head>
-    <?php dpl_render_head(
+    <?php fn_render_head(
         $siteConfig,
         $router,
         $pageTitle ?? '',
@@ -20,7 +20,7 @@ $siteName = $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Dropplets';
 </head>
 
 <body>
-    <?php dpl_skip_link(); ?>
+    <?php fn_skip_link(); ?>
     <header class="masthead">
         <div class="masthead-inner">
             <a class="site-title" href="<?= e($router->generate('home')) ?>"><?= e($siteName) ?></a>

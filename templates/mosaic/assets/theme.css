@@ -1,4 +1,4 @@
-/* Dropplets "mosaic" theme — byzantine tilework.
+/* Fieldnote "mosaic" theme — byzantine tilework.
  Spanning tile grid with grout gaps, tessera bands, lapis / gold / terracotta. */
 
 :root { color-scheme: light dark; --bg: #f5f1e6; --surface: #fdfaf2; --text: #232733; --muted: #555b6b; --accent: #1e4596; --accent-contrast: #ffffff; --line: #8f8a76; --focus: #1e4596; --gold: #c9a227; --terracotta: #b65c38; --lapis: #2b55b0; --tessera: #e7e0cd; --grout: #d9d3c2; }

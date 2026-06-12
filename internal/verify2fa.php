@@ -1,6 +1,6 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\csrf_field;
+use function Fieldnote\e;
+use function Fieldnote\csrf_field;
 require __DIR__ . '/header.php';
 ?>
 <h1 class="setupH1 setup text-center">Two-Factor Verification</h1>

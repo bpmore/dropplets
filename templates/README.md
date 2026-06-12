@@ -10,11 +10,11 @@ gate — it must be green before a theme ships.
 
 | Where | Call | Why |
 |---|---|---|
-| `header.php`, right after `<body>` | `Dropplets\dpl_skip_link()` | skip-to-content (styled by the shared baseline CSS) |
+| `header.php`, right after `<body>` | `Fieldnote\fn_skip_link()` | skip-to-content (styled by the shared baseline CSS) |
 | `header.php`, main element | `<main id="main" …>` | skip-link target |
-| `header.php`, in `<head>` | `Dropplets\dpl_render_head(...)` | meta, canonical, OG, and the shared a11y baseline `<style>` |
-| `home.php`, after the post list | `Dropplets\dpl_pagination($router, $page, $numPages)` | aria-current, rel prev/next, 24px targets. The baseline CSS gives the `.pagination` list a centered flex layout with bullets removed — style on top of that, don't re-add resets |
-| `post.php`, hero image | `alt="<?= e(Dropplets\dpl_image_alt($post)) ?>"` | the hero is content, not decoration |
+| `header.php`, in `<head>` | `Fieldnote\fn_render_head(...)` | meta, canonical, OG, and the shared a11y baseline `<style>` |
+| `home.php`, after the post list | `Fieldnote\fn_pagination($router, $page, $numPages)` | aria-current, rel prev/next, 24px targets. The baseline CSS gives the `.pagination` list a centered flex layout with bullets removed — style on top of that, don't re-add resets |
+| `post.php`, hero image | `alt="<?= e(Fieldnote\fn_image_alt($post)) ?>"` | the hero is content, not decoration |
 
 Other rules:
 
@@ -24,7 +24,7 @@ Other rules:
 - **Card/list images stay `alt=""`** — the adjacent title link names the
   destination; duplicating it double-announces in screen readers.
 - Post bodies render through `ParsedownExtra` with `setSafeMode(true)`,
-  always. Escape everything else with `Dropplets\e()`.
+  always. Escape everything else with `Fieldnote\e()`.
 - No JavaScript. No fixed widths — layouts must reflow at 320 px
   (= 400 % zoom) with no horizontal scroll.
 - Don't disable focus outlines. The baseline provides a `:focus-visible`

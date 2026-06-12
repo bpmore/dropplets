@@ -1,6 +1,6 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\dpl_image_alt;
+use function Fieldnote\e;
+use function Fieldnote\fn_image_alt;
 require __DIR__ . '/header.php';
 
 // Parsedown in SAFE MODE: raw HTML and javascript: URLs in the post
@@ -11,7 +11,7 @@ $parser->setSafeMode(true);
 <article class="exhibit">
     <?php if (!empty($post['imageUrl'])): ?>
         <div class="plate-frame">
-            <img src="<?= e($post['imageUrl']) ?>" alt="<?= e(dpl_image_alt($post)) ?>">
+            <img src="<?= e($post['imageUrl']) ?>" alt="<?= e(fn_image_alt($post)) ?>">
         </div>
     <?php endif; ?>
 

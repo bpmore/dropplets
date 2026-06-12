@@ -1,4 +1,4 @@
-<?php use function Dropplets\e; ?>
+<?php use function Fieldnote\e; ?>
     </main>
     <footer class="site-footer">
         <p class="insert-coin" aria-hidden="true">&#9679; INSERT COIN &#9679;</p>

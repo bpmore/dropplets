@@ -1,8 +1,8 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\dpl_post_url;
-use function Dropplets\dpl_excerpt;
-use function Dropplets\dpl_pagination;
+use function Fieldnote\e;
+use function Fieldnote\fn_post_url;
+use function Fieldnote\fn_excerpt;
+use function Fieldnote\fn_pagination;
 require __DIR__ . '/header.php';
 $dateFormat = i18n('dateformat', false);
 $lead = $allPosts[0] ?? null;
@@ -18,10 +18,10 @@ $rest = array_slice($allPosts, 1);
         <?php endif; ?>
         <div class="hero-body">
             <p class="kicker"><?= e(date($dateFormat, (int) $lead['date'])) ?> &middot; <?= e($lead['author']) ?></p>
-            <h2 class="hero-title"><a href="<?= e(dpl_post_url($router, $lead)) ?>"><?= e($lead['title']) ?></a></h2>
+            <h2 class="hero-title"><a href="<?= e(fn_post_url($router, $lead)) ?>"><?= e($lead['title']) ?></a></h2>
             <?php if (!empty($lead['password'])): ?>
                 <p class="hero-excerpt">&#128274; This story is password-protected.</p>
-            <?php elseif (($x = dpl_excerpt($lead, 240)) !== ''): ?>
+            <?php elseif (($x = fn_excerpt($lead, 240)) !== ''): ?>
                 <p class="hero-excerpt"><?= e($x) ?></p>
             <?php endif; ?>
         </div>
@@ -36,8 +36,8 @@ $rest = array_slice($allPosts, 1);
                         <img class="story-image" src="<?= e($p['imageUrl']) ?>" alt="" loading="lazy">
                     <?php endif; ?>
                     <p class="kicker"><?= e(date($dateFormat, (int) $p['date'])) ?></p>
-                    <h3 class="story-title"><a href="<?= e(dpl_post_url($router, $p)) ?>"><?= e($p['title']) ?></a></h3>
-                    <?php if (empty($p['password']) && ($x = dpl_excerpt($p, 120)) !== ''): ?>
+                    <h3 class="story-title"><a href="<?= e(fn_post_url($router, $p)) ?>"><?= e($p['title']) ?></a></h3>
+                    <?php if (empty($p['password']) && ($x = fn_excerpt($p, 120)) !== ''): ?>
                         <p class="story-excerpt"><?= e($x) ?></p>
                     <?php endif; ?>
                 </article>
@@ -45,5 +45,5 @@ $rest = array_slice($allPosts, 1);
         </div>
     <?php endif; ?>
 <?php endif; ?>
-<?php dpl_pagination($router, $page, $numPages); ?>
+<?php fn_pagination($router, $page, $numPages); ?>
 <?php require __DIR__ . '/footer.php'; ?>

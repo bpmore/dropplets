@@ -1,5 +1,5 @@
 {
-    "name": "bpmore/dropplets",
+    "name": "bpmore/fieldnote",
     "description": "A minimalist markdown blogging platform. Modernized and hardened fork.",
     "type": "project",
     "license": "GPL-3.0-or-later",
@@ -16,7 +16,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Dropplets\\": "src/"
+            "Fieldnote\\": "src/"
         },
         "files": [
             "src/i18n.php"

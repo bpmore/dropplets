@@ -1,7 +1,7 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\csrf_field;
-use function Dropplets\dpl_effective_upload_limit;
+use function Fieldnote\e;
+use function Fieldnote\csrf_field;
+use function Fieldnote\fn_effective_upload_limit;
 
 $needsEditor = true; // footer loads the EasyMDE bundle only when this is set
 require __DIR__ . '/header.php';
@@ -10,7 +10,7 @@ $isEdit   = isset($post['title']);
 $action   = $isEdit
     ? $router->generate('editPost', ['id' => $post['_id']])
     : $router->generate('write');
-$uploadLimit   = dpl_effective_upload_limit();
+$uploadLimit   = fn_effective_upload_limit();
 $uploadLimitMb = rtrim(rtrim(number_format($uploadLimit / 1048576, 1), '0'), '.');
 // Per-post passwords are now hashed and never sent back to the browser. The
 // field is shown blank; leaving it blank on edit keeps the existing password.

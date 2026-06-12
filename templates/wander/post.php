@@ -1,6 +1,6 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\dpl_image_alt;
+use function Fieldnote\e;
+use function Fieldnote\fn_image_alt;
 require __DIR__ . '/header.php';
 
 // Safe mode keeps raw HTML and javascript: URLs out of rendered markdown.
@@ -10,7 +10,7 @@ $parser->setSafeMode(true);
 <article class="dispatch">
     <?php if (!empty($post['imageUrl'])): ?>
         <div class="vista">
-            <img class="vista-photo" src="<?= e($post['imageUrl']) ?>" alt="<?= e(dpl_image_alt($post)) ?>">
+            <img class="vista-photo" src="<?= e($post['imageUrl']) ?>" alt="<?= e(fn_image_alt($post)) ?>">
         </div>
     <?php endif; ?>
 

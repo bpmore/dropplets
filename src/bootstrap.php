@@ -1,6 +1,6 @@
 <?php
 
-namespace Dropplets;
+namespace Fieldnote;
 
 use SleekDB\Store;
 
@@ -19,36 +19,36 @@ use SleekDB\Store;
 // keep those notices out of rendered pages without silencing real errors.
 error_reporting(E_ALL & ~E_DEPRECATED);
 
-define('DPL_ROOT', dirname(__DIR__));
-define('DPL_DATA_DIR', DPL_ROOT . '/data');
-define('DPL_DB_DIR', DPL_DATA_DIR . '/siteDatabase');
-define('DPL_TEMPLATES_DIR', DPL_ROOT . '/templates');
-define('DPL_INTERNAL_DIR', DPL_ROOT . '/internal');
-define('DPL_UPLOAD_DIR', __DIR__ === '' ? '' : DPL_ROOT . '/public/uploads');
+define('FN_ROOT', dirname(__DIR__));
+define('FN_DATA_DIR', FN_ROOT . '/data');
+define('FN_DB_DIR', FN_DATA_DIR . '/siteDatabase');
+define('FN_TEMPLATES_DIR', FN_ROOT . '/templates');
+define('FN_INTERNAL_DIR', FN_ROOT . '/internal');
+define('FN_UPLOAD_DIR', __DIR__ === '' ? '' : FN_ROOT . '/public/uploads');
 
-require DPL_ROOT . '/vendor/autoload.php';
+require FN_ROOT . '/vendor/autoload.php';
 
 Security::startSession();
 Security::sendBaseHeaders();
 
-$configStore = new Config(DPL_DATA_DIR);
+$configStore = new Config(FN_DATA_DIR);
 $siteConfig  = $configStore->load();
 
 date_default_timezone_set($siteConfig['timezone'] ?: 'America/New_York');
 
 $dbOptions = ['timeout' => false];
-$blogStore  = new Store('blog', DPL_DB_DIR, $dbOptions);
-$imageStore = new Store('images', DPL_DB_DIR, $dbOptions);
+$blogStore  = new Store('blog', FN_DB_DIR, $dbOptions);
+$imageStore = new Store('images', FN_DB_DIR, $dbOptions);
 
 // One-time migration: give pre-3.1 posts a URL slug. Marker file keeps this
 // from scanning the store on every request.
-$slugMarker = DPL_DATA_DIR . '/.slugs-v1';
-if (!is_file($slugMarker) && is_dir(DPL_DB_DIR . '/blog')) {
+$slugMarker = FN_DATA_DIR . '/.slugs-v1';
+if (!is_file($slugMarker) && is_dir(FN_DB_DIR . '/blog')) {
     foreach ($blogStore->findAll() as $existingPost) {
         if (empty($existingPost['slug'])) {
             $blogStore->updateById(
                 (int) $existingPost['_id'],
-                ['slug' => dpl_unique_slug($blogStore, (string) ($existingPost['title'] ?? ''))]
+                ['slug' => fn_unique_slug($blogStore, (string) ($existingPost['title'] ?? ''))]
             );
         }
     }
@@ -57,8 +57,8 @@ if (!is_file($slugMarker) && is_dir(DPL_DB_DIR . '/blog')) {
 
 // One-time migration: posts published before publishedAt existed keep their
 // current date as the publish date, so hide/re-publish never moves their URL.
-$pubMarker = DPL_DATA_DIR . '/.pubdate-v1';
-if (!is_file($pubMarker) && is_dir(DPL_DB_DIR . '/blog')) {
+$pubMarker = FN_DATA_DIR . '/.pubdate-v1';
+if (!is_file($pubMarker) && is_dir(FN_DB_DIR . '/blog')) {
     foreach ($blogStore->findBy(['draft', '=', false]) as $existingPost) {
         if (empty($existingPost['publishedAt'])) {
             $blogStore->updateById(
@@ -73,7 +73,7 @@ if (!is_file($pubMarker) && is_dir(DPL_DB_DIR . '/blog')) {
 /**
  * Parse a php.ini shorthand size ("2M", "512K") into bytes.
  */
-function dpl_ini_bytes(string $value): int
+function fn_ini_bytes(string $value): int
 {
     $value = trim($value);
     if ($value === '' || $value === '-1') {
@@ -94,12 +94,12 @@ function dpl_ini_bytes(string $value): int
  * by PHP's per-request limits. Shown in the editor UI and enforced client-side
  * so a too-large file fails with a clear message instead of a blank error.
  */
-function dpl_effective_upload_limit(): int
+function fn_effective_upload_limit(): int
 {
     return min(
         ImageHandler::MAX_BYTES,
-        dpl_ini_bytes((string) ini_get('upload_max_filesize')),
-        dpl_ini_bytes((string) ini_get('post_max_size'))
+        fn_ini_bytes((string) ini_get('upload_max_filesize')),
+        fn_ini_bytes((string) ini_get('post_max_size'))
     );
 }
 
@@ -107,7 +107,7 @@ function dpl_effective_upload_limit(): int
  * Build a URL-safe slug from a post title. Never empty and never purely
  * numeric (numeric paths are reserved for the legacy /post/{id} redirects).
  */
-function dpl_slugify(string $title): string
+function fn_slugify(string $title): string
 {
     $slug = strtolower(trim($title));
     $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $slug);
@@ -129,9 +129,9 @@ function dpl_slugify(string $title): string
  * A slug unique across the blog store, appending -2, -3, ... on collision.
  * $excludeId lets a post keep its own slug when re-saved.
  */
-function dpl_unique_slug(Store $blogStore, string $title, ?int $excludeId = null): string
+function fn_unique_slug(Store $blogStore, string $title, ?int $excludeId = null): string
 {
-    $base = dpl_slugify($title);
+    $base = fn_slugify($title);
     $slug = $base;
     $n = 2;
     while (true) {
@@ -150,7 +150,7 @@ function dpl_unique_slug(Store $blogStore, string $title, ?int $excludeId = null
  * skip-link reveal, :focus-visible ring, pagination target-size floor,
  * .sr-only, and a global reduced-motion kill switch.
  */
-function dpl_a11y_base_css(): string
+function fn_a11y_base_css(): string
 {
     return <<<'CSS'
 .skip-link{position:absolute;left:-999px;top:auto}
@@ -166,9 +166,9 @@ CSS;
 
 /**
  * Skip-to-content link. Themes call this immediately after <body> and give
- * their main element id="main". Styling lives in dpl_a11y_base_css().
+ * their main element id="main". Styling lives in fn_a11y_base_css().
  */
-function dpl_skip_link(string $label = 'Skip to content'): void
+function fn_skip_link(string $label = 'Skip to content'): void
 {
     echo '<a class="skip-link" href="#main">' . e($label) . '</a>' . "\n";
 }
@@ -181,7 +181,7 @@ function dpl_skip_link(string $label = 'Skip to content'): void
  *
  * @param array<string,mixed> $post
  */
-function dpl_image_alt(array $post): string
+function fn_image_alt(array $post): string
 {
     return (string) ($post['title'] ?? '');
 }
@@ -189,9 +189,9 @@ function dpl_image_alt(array $post): string
 /**
  * Shared pagination block: aria-label, aria-current on the active page,
  * rel prev/next. Themes style it via the .pagination / .current classes;
- * the 24px minimum target size comes from dpl_a11y_base_css().
+ * the 24px minimum target size comes from fn_a11y_base_css().
  */
-function dpl_pagination(\AltoRouter $router, int $page, int $numPages): void
+function fn_pagination(\AltoRouter $router, int $page, int $numPages): void
 {
     if ($numPages <= 1) {
         return;
@@ -224,9 +224,9 @@ function dpl_pagination(\AltoRouter $router, int $page, int $numPages): void
  * @param array<string,mixed>      $siteConfig
  * @param array<string,mixed>|null $post Current post on single-post pages.
  */
-function dpl_render_head(array $siteConfig, \AltoRouter $router, string $pageTitle, ?array $post, string $themeCssHref): void
+function fn_render_head(array $siteConfig, \AltoRouter $router, string $pageTitle, ?array $post, string $themeCssHref): void
 {
-    $siteName  = $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Dropplets';
+    $siteName  = $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Fieldnote';
     $fullTitle = $siteName . ' | ' . $pageTitle;
 
     $canonical = '';
@@ -245,7 +245,7 @@ function dpl_render_head(array $siteConfig, \AltoRouter $router, string $pageTit
     echo '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">' . "\n";
     echo '<meta name="robots" content="index, follow">' . "\n";
     echo '<title>' . e($fullTitle) . '</title>' . "\n";
-    echo '<style>' . dpl_a11y_base_css() . '</style>' . "\n";
+    echo '<style>' . fn_a11y_base_css() . '</style>' . "\n";
     echo '<link rel="stylesheet" href="' . e($themeCssHref) . '">' . "\n";
     echo '<link rel="icon" href="' . $base . '/logo.svg" type="image/svg+xml">' . "\n";
     echo '<link rel="alternate" type="application/rss+xml" title="' . e($siteName) . '" href="' . e($router->generate('feed')) . '">' . "\n";
@@ -282,7 +282,7 @@ function dpl_render_head(array $siteConfig, \AltoRouter $router, string $pageTit
  *
  * @param array<string,mixed> $post
  */
-function dpl_excerpt(array $post, int $limit = 160): string
+function fn_excerpt(array $post, int $limit = 160): string
 {
     if (!empty($post['password'])) {
         return '';
@@ -311,10 +311,10 @@ function dpl_excerpt(array $post, int $limit = 160): string
  * Names of installed templates: directories under templates/ that provide
  * the two required views.
  */
-function dpl_template_names(): array
+function fn_template_names(): array
 {
     $names = [];
-    foreach (glob(DPL_TEMPLATES_DIR . '/*', GLOB_ONLYDIR) ?: [] as $dir) {
+    foreach (glob(FN_TEMPLATES_DIR . '/*', GLOB_ONLYDIR) ?: [] as $dir) {
         if (is_file($dir . '/home.php') && is_file($dir . '/post.php')) {
             $names[] = basename($dir);
         }
@@ -327,7 +327,7 @@ function dpl_template_names(): array
  * Canonical URL for a post: /{year}/{month}/{slug}, dated from the post's
  * publish timestamp in the site's configured timezone.
  */
-function dpl_post_url(\AltoRouter $router, array $post): string
+function fn_post_url(\AltoRouter $router, array $post): string
 {
     $ts = (int) ($post['date'] ?? 0);
     return $router->generate('post', [
@@ -342,14 +342,14 @@ function dpl_post_url(\AltoRouter $router, array $post): string
  * Defends against path traversal: only a bare directory name that actually
  * exists under templates/ is accepted; anything else falls back to liquid-new.
  */
-function dpl_template_dir(string $name): string
+function fn_template_dir(string $name): string
 {
     $name = basename($name); // strip any path components
-    $dir  = DPL_TEMPLATES_DIR . '/' . $name;
+    $dir  = FN_TEMPLATES_DIR . '/' . $name;
     if ($name !== '' && is_dir($dir) && is_file($dir . '/home.php') && is_file($dir . '/post.php')) {
         return $dir;
     }
-    return DPL_TEMPLATES_DIR . '/liquid-new';
+    return FN_TEMPLATES_DIR . '/liquid-new';
 }
 
 /**
@@ -359,7 +359,7 @@ function dpl_template_dir(string $name): string
  * @param array<string,mixed> $post
  * @return array<string,mixed>
  */
-function dpl_with_image(array $post, Store $imageStore): array
+function fn_with_image(array $post, Store $imageStore): array
 {
     $post['imageUrl'] = '';
     if (isset($post['image']) && is_numeric($post['image'])) {

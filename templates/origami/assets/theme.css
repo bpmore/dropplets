@@ -1,4 +1,4 @@
-/* Dropplets "origami" theme — folded paper.
+/* Fieldnote "origami" theme — folded paper.
  Faceted gradient ground, clipped-corner cards, hairline creases, crane red. */
 
 :root { color-scheme: light dark; --bg: #f7f5f1; --surface: #ffffff; --text: #25242a; --muted: #5e5c64; --accent: #b0271f; --accent-contrast: #ffffff; --line: #88847b; --focus: #b0271f; --fold-1: #efece6; --fold-2: #e6e2da; --fold-3: #dcd7cc; --crease: #d4cfc4; }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Dropplets;
+namespace Fieldnote;
 
 /**
  * Centralizes session hardening, CSRF protection, and output escaping.
@@ -148,7 +148,7 @@ final class Security
             'samesite' => 'Lax',
         ]);
 
-        session_name('dropplets_sess');
+        session_name('fieldnote_sess');
         session_start();
     }
 

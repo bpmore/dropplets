@@ -1,4 +1,4 @@
-/* Dropplets "memphis" — 80s Memphis Group: confetti, squiggles, pastels + ink. */
+/* Fieldnote "memphis" — 80s Memphis Group: confetti, squiggles, pastels + ink. */
 :root { color-scheme: light dark; --bg: #fdf6ee; --surface: #ffffff; --text: #221b2a; --muted: #5e5468; --accent: #9c2360; --accent-contrast: #ffffff; --line: #221b2a; --focus: #0a6b60; --ink: #221b2a; --pink: #f9b4d0; --teal: #8fe3d9; --yellow: #ffe177; --lilac: #cfb9f2; }
 @media (prefers-color-scheme: dark) { :root { --bg: #1d1430; --surface: #2a1d42; --text: #f5effc; --muted: #c0b1d6; --accent: #74e6d8; --accent-contrast: #0d2f2a; --line: #b39ed1; --focus: #74e6d8; --ink: #f5effc; --pink: #e878ad; --teal: #2fbfae; --yellow: #d9a92f; --lilac: #8f6cd9; } }
 * { box-sizing: border-box; }

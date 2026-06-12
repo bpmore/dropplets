@@ -1,6 +1,6 @@
 <?php
-use function Dropplets\e;
-use Dropplets\Security;
+use function Fieldnote\e;
+use Fieldnote\Security;
 
 // All internal markup is ours and self-hosted, so these pages run under a
 // strict CSP (no inline scripts or styles). Must be sent before any output.
@@ -14,7 +14,7 @@ $base = e($siteConfig['basePath']);
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>Dropplets | <?= e($pageTitle ?? '') ?></title>
+    <title>Fieldnote | <?= e($pageTitle ?? '') ?></title>
     <link rel="icon" href="<?= $base ?>/logo.svg" type="image/svg+xml">
     <link rel="stylesheet" href="<?= $base ?>/static/vendor/bootstrap.min.css">
     <?php if (!empty($needsEditor)): ?>
@@ -28,7 +28,7 @@ $base = e($siteConfig['basePath']);
         <div class="row my-1">
             <div class="col-md-3"></div>
             <div class="col-md-6 setupHeader text-center">
-                <a href="<?= e($siteConfig['domain'] ?: ($siteConfig['basePath'] ?: '/')) ?>"><span class="headerLogo"></span><span class="droppletsName">Dropplets</span></a>
+                <a href="<?= e($siteConfig['domain'] ?: ($siteConfig['basePath'] ?: '/')) ?>"><span class="headerLogo"></span><span class="fieldnoteName">Fieldnote</span></a>
             </div>
             <div class="col-md-3"></div>
         </div>

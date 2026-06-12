@@ -1,7 +1,7 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\dpl_post_url;
-use function Dropplets\dpl_pagination;
+use function Fieldnote\e;
+use function Fieldnote\fn_post_url;
+use function Fieldnote\fn_pagination;
 require __DIR__ . '/header.php';
 
 $dateFormat = i18n('dateformat', false);
@@ -17,7 +17,7 @@ $stop = ($page - 1) * count($allPosts);
                 <span class="badge" aria-hidden="true"><?= e((string) ($stop + $i + 1)) ?></span>
                 <div class="station-body">
                     <h2 class="station-name">
-                        <a href="<?= e(dpl_post_url($router, $p)) ?>"><?= e($p['title']) ?></a>
+                        <a href="<?= e(fn_post_url($router, $p)) ?>"><?= e($p['title']) ?></a>
                     </h2>
                     <?php if (!empty($p['password'])): ?>
                         <p class="station-line"><span class="lock" aria-hidden="true">&#128274;</span> Restricted access &middot; <?= e(date($dateFormat, (int) $p['date'])) ?></p>
@@ -30,5 +30,5 @@ $stop = ($page - 1) * count($allPosts);
     </ol>
 <?php endif; ?>
 
-<?php dpl_pagination($router, $page, $numPages); ?>
+<?php fn_pagination($router, $page, $numPages); ?>
 <?php require __DIR__ . '/footer.php'; ?>

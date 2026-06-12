@@ -1,8 +1,8 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\dpl_post_url;
-use function Dropplets\dpl_excerpt;
-use function Dropplets\dpl_pagination;
+use function Fieldnote\e;
+use function Fieldnote\fn_post_url;
+use function Fieldnote\fn_excerpt;
+use function Fieldnote\fn_pagination;
 require __DIR__ . '/header.php';
 
 $dateFormat = i18n('dateformat', false);
@@ -16,11 +16,11 @@ $dateFormat = i18n('dateformat', false);
             <li class="abstract">
                 <article>
                     <h2 class="abstract-title">
-                        <a href="<?= e(dpl_post_url($router, $p)) ?>"><?= e($p['title']) ?></a>
+                        <a href="<?= e(fn_post_url($router, $p)) ?>"><?= e($p['title']) ?></a>
                     </h2>
                     <?php if (!empty($p['password'])): ?>
                         <p class="abstract-text is-locked">&#128274; This entry is password-protected. The abstract is withheld.</p>
-                    <?php elseif (($x = dpl_excerpt($p, 180)) !== ''): ?>
+                    <?php elseif (($x = fn_excerpt($p, 180)) !== ''): ?>
                         <p class="abstract-text"><?= e($x) ?></p>
                     <?php endif; ?>
                     <p class="abstract-meta"><?= e($p['author']) ?> &middot; <?= e(date($dateFormat, (int) $p['date'])) ?></p>
@@ -30,5 +30,5 @@ $dateFormat = i18n('dateformat', false);
     </ol>
 <?php endif; ?>
 
-<?php dpl_pagination($router, $page, $numPages); ?>
+<?php fn_pagination($router, $page, $numPages); ?>
 <?php require __DIR__ . '/footer.php'; ?>

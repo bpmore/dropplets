@@ -1,4 +1,4 @@
-<?php use function Dropplets\e; ?>
+<?php use function Fieldnote\e; ?>
     </main>
     <footer class="site-footer">
         <span class="starburst starburst-small" aria-hidden="true"></span>

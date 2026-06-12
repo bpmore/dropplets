@@ -1,6 +1,6 @@
 <?php
-use function Dropplets\e;
-use function Dropplets\dpl_image_alt;
+use function Fieldnote\e;
+use function Fieldnote\fn_image_alt;
 require __DIR__ . '/header.php';
 
 $parser = new ParsedownExtra();
@@ -15,7 +15,7 @@ $parser->setSafeMode(true);
 
     <?php if (!empty($post['imageUrl'])): ?>
         <figure class="post-figure">
-            <img class="post-hero" src="<?= e($post['imageUrl']) ?>" alt="<?= e(dpl_image_alt($post)) ?>">
+            <img class="post-hero" src="<?= e($post['imageUrl']) ?>" alt="<?= e(fn_image_alt($post)) ?>">
         </figure>
     <?php endif; ?>
 

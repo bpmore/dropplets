@@ -1,4 +1,4 @@
-/* Dropplets "stride" theme — high-energy fitness log.
+/* Fieldnote "stride" theme — high-energy fitness log.
    Bold condensed display type, diagonal accent stripes, stat-block cards. */
 
 :root { color-scheme: light dark; --bg: #f4f3f0; --surface: #ffffff; --text: #191713; --muted: #56524b; --accent: #9a3412; --accent-contrast: #ffffff; --line: #76716a; --focus: #9a3412; --shadow: 0 2px 6px rgba(25, 23, 19, .08), 0 10px 24px rgba(25, 23, 19, .07); }
