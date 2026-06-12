@@ -31,6 +31,8 @@ final class Config
         'paletteOverrides' => [],
         'searchEnabled' => true,
         'statsEnabled' => true,
+        'federationEnabled' => false,
+        'apHandle' => 'blog',
         'trustedProxies' => '',
         'postsPerPage' => 6,
         'basePath'     => '',

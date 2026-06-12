@@ -43,6 +43,8 @@ $config = array_merge(Fieldnote\Config::DEFAULTS, [
     'password' => password_hash('smoke-pass', PASSWORD_DEFAULT),
     'template' => 'gazette',
     'timezone' => 'UTC',
+    'federationEnabled' => true,
+    'apHandle' => 'smoke',
 ]);
 file_put_contents($tmp . '/data/config.php', "<?php\nreturn " . var_export($config, true) . ";\n");
 
@@ -94,8 +96,11 @@ $blog->insert([
 
 $port = random_int(49152, 60000);
 $base = "http://127.0.0.1:$port";
+// FN_AP_ALLOW_PRIVATE lets the federation checks talk to loopback;
+// CLI_SERVER_WORKERS keeps the self-delivered Accept from deadlocking
+// the single-threaded built-in server.
 $pid  = (int) shell_exec(sprintf(
-    'FN_DATA_DIR=%s FN_UPLOAD_DIR=%s php -S 127.0.0.1:%d -t %s %s > %s 2>&1 & echo $!',
+    'FN_AP_ALLOW_PRIVATE=1 PHP_CLI_SERVER_WORKERS=4 FN_DATA_DIR=%s FN_UPLOAD_DIR=%s php -S 127.0.0.1:%d -t %s %s > %s 2>&1 & echo $!',
     escapeshellarg($tmp . '/data'),
     escapeshellarg($tmp . '/uploads'),
     $port,
@@ -370,6 +375,71 @@ preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
 $json = json_decode($b, true);
 check('passkey create options exclude existing credential', $s === 200 && count($json['publicKey']['excludeCredentials'] ?? []) === 1 && ($json['publicKey']['authenticatorSelection']['requireResidentKey'] ?? false) === true, "status $s");
 
+// ----------------------------------------------------- federation (AP-1) --
+
+$apHost = '127.0.0.1:' . $port;
+[$s, , $b] = req('GET', "$base/.well-known/webfinger?resource=" . urlencode("acct:smoke@$apHost"));
+$json = json_decode($b, true);
+check('webfinger resolves the handle', $s === 200 && ($json['links'][0]['href'] ?? '') === "$base/ap/actor", "status $s");
+[$s] = req('GET', "$base/.well-known/webfinger?resource=" . urlencode("acct:wrong@$apHost"));
+check('webfinger rejects unknown handles', $s === 404, "status $s");
+
+[$s, $h, $b] = req('GET', "$base/ap/actor");
+$actor = json_decode($b, true);
+check('actor document is well-formed', $s === 200
+    && ($actor['type'] ?? '') === 'Person'
+    && ($actor['preferredUsername'] ?? '') === 'smoke'
+    && str_contains((string) ($actor['publicKey']['publicKeyPem'] ?? ''), 'BEGIN PUBLIC KEY')
+    && str_contains($h['content-type'] ?? '', 'activity+json'), "status $s");
+
+[$s] = req('POST', "$base/ap/inbox", [
+    'headers' => ['Content-Type: application/activity+json'],
+    'body'    => json_encode(['type' => 'Follow', 'actor' => 'https://elsewhere.example/u/x', 'object' => "$base/ap/actor"]),
+]);
+check('unsigned follow rejected', $s === 401, "status $s");
+[$s] = req('POST', "$base/ap/inbox", [
+    'headers' => ['Content-Type: application/activity+json'],
+    'body'    => str_repeat('a', 70000),
+]);
+check('oversized inbox payload rejected', $s === 413, "status $s");
+
+// A correctly signed Follow — signed with the blog's OWN key (keyId points
+// at our own actor, fetched over loopback thanks to FN_AP_ALLOW_PRIVATE),
+// which exercises signature verification, actor fetch + cache, follower
+// storage, and the signed Accept delivery end to end.
+$apKeys = json_decode((string) file_get_contents($tmp . '/data/activitypub/keys.json'), true);
+$signedApPost = static function (array $activity) use ($base, $apHost, $apKeys): array {
+    $body   = (string) json_encode($activity, JSON_UNESCAPED_SLASHES);
+    $date   = gmdate('D, d M Y H:i:s \G\M\T');
+    $digest = 'SHA-256=' . base64_encode(hash('sha256', $body, true));
+    $signing = "(request-target): post /ap/inbox\nhost: $apHost\ndate: $date\ndigest: $digest";
+    openssl_sign($signing, $sig, $apKeys['private'], OPENSSL_ALGO_SHA256);
+    return req('POST', "$base/ap/inbox", ['headers' => [
+        'Content-Type: application/activity+json',
+        "Date: $date",
+        "Digest: $digest",
+        'Signature: keyId="' . $base . '/ap/actor#main-key",algorithm="rsa-sha256"'
+            . ',headers="(request-target) host date digest",signature="' . base64_encode($sig) . '"',
+    ], 'body' => $body]);
+};
+
+[$s] = $signedApPost(['@context' => 'https://www.w3.org/ns/activitystreams',
+    'id' => "$base/ap/actor#test-follow", 'type' => 'Follow',
+    'actor' => "$base/ap/actor", 'object' => "$base/ap/actor"]);
+[, , $b] = req('GET', "$base/ap/followers");
+$json = json_decode($b, true);
+check('signed follow accepted and counted', $s === 202 && ($json['totalItems'] ?? -1) === 1, "inbox $s, totalItems " . var_export($json['totalItems'] ?? null, true));
+
+[$s] = $signedApPost(['@context' => 'https://www.w3.org/ns/activitystreams',
+    'id' => "$base/ap/actor#test-undo", 'type' => 'Undo', 'actor' => "$base/ap/actor",
+    'object' => ['type' => 'Follow', 'actor' => "$base/ap/actor", 'object' => "$base/ap/actor"]]);
+[, , $b] = req('GET', "$base/ap/followers");
+$json = json_decode($b, true);
+check('undo removes the follower', $s === 202 && ($json['totalItems'] ?? -1) === 0, "inbox $s");
+
+[$s, , $b] = req('GET', "$base/ap/outbox");
+check('outbox is a valid empty collection (AP-1)', $s === 200 && (json_decode($b, true)['totalItems'] ?? -1) === 0, "status $s");
+
 // --------------------------------------------------------- export / import --
 
 if (!class_exists(ZipArchive::class)) {
@@ -549,6 +619,17 @@ check('non-canonical host 301s to the domain', $s === 301 && ($h['location'] ?? 
 check('canonical host serves normally', $s === 200, "status $s");
 [$s] = req('POST', "$base/logout", ['headers' => ['Host: old-address.example']]);
 check('non-GET on wrong host is not blind-redirected', $s === 419, "status $s");
+
+// The settings save above did not tick federation, so it is now OFF:
+// every ActivityPub endpoint must 404.
+foreach (["/.well-known/webfinger?resource=acct:smoke@127.0.0.1:$port", '/ap/actor', '/ap/outbox', '/ap/followers'] as $apPath) {
+    [$s] = req('GET', $base . $apPath);
+    if ($s !== 404) {
+        check("federation off: $apPath 404s", false, "status $s");
+    }
+}
+[$s] = req('POST', "$base/ap/inbox", ['body' => '{}', 'headers' => ['Content-Type: application/activity+json']]);
+check('federation off: all AP endpoints 404', $s === 404, "inbox status $s");
 
 // ---------------------------------------------------------------- summary --
 

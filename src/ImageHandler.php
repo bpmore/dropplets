@@ -77,7 +77,7 @@ final class ImageHandler
      */
     public function storeFromUrl(string $url): ?array
     {
-        $pinned = $this->safeResolvedTarget($url);
+        $pinned = SafeHttp::resolveTarget($url);
         if ($pinned === null) {
             return null;
         }
@@ -177,55 +177,6 @@ final class ImageHandler
         return [$this->publicBase . $relative, ltrim($relative, '/')];
     }
 
-    /**
-     * Validate the URL (http/https, host resolves only to public addresses)
-     * and return [host, port, ip] so the caller can pin curl to the exact
-     * address that passed validation.
-     *
-     * @return array{0:string,1:int,2:string}|null
-     */
-    private function safeResolvedTarget(string $url): ?array
-    {
-        $parts = parse_url($url);
-        if ($parts === false || empty($parts['scheme']) || empty($parts['host'])) {
-            return null;
-        }
-        $scheme = strtolower($parts['scheme']);
-        if (!in_array($scheme, ['http', 'https'], true)) {
-            return null;
-        }
-
-        $host = $parts['host'];
-        $port = (int) ($parts['port'] ?? ($scheme === 'https' ? 443 : 80));
-
-        // Resolve to IPs. A literal IP host is checked directly.
-        $ips = filter_var($host, FILTER_VALIDATE_IP)
-            ? [$host]
-            : array_merge(
-                gethostbynamel($host) ?: [],
-                $this->resolveAaaa($host)
-            );
-
-        if (empty($ips)) {
-            return null;
-        }
-
-        foreach ($ips as $ip) {
-            if (!filter_var(
-                $ip,
-                FILTER_VALIDATE_IP,
-                FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-            )) {
-                return null; // any private/reserved address fails the whole URL
-            }
-        }
-        return [$host, $port, $ips[0]];
-    }
-
-    /** @return string[] */
-    private function resolveAaaa(string $host): array
-    {
-        $records = @dns_get_record($host, DNS_AAAA) ?: [];
-        return array_column($records, 'ipv6');
-    }
+    // Target validation lives in Fieldnote\SafeHttp, shared with the
+    // ActivityPub fetcher so both SSRF surfaces use one implementation.
 }

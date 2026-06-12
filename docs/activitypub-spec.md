@@ -163,7 +163,7 @@ count next to the Views panel.
 
 | Phase | Scope | Size |
 |---|---|---|
-| AP-1 | SafeHttp hoist; keys; webfinger + actor + followers; signed inbox Follow/Undo + Accept | L |
+| AP-1 | SafeHttp hoist; keys; webfinger + actor + followers; signed inbox Follow/Undo + Accept | L — SHIPPED |
 | AP-2 | Article objects + content negotiation on post URLs; outbox; queue + lazy delivery; Create/Update/Delete wiring | L |
 | AP-3 | Settings UI, dashboard count, bin/ap-deliver.php, docs, interop hardening pass | M |
 

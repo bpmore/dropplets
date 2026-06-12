@@ -78,6 +78,24 @@ $isNew = ($siteConfig['name'] === '');
                            <?= !empty($siteConfig['statsEnabled']) ? 'checked' : '' ?>>
                     <label class="form-check-label" for="blogStatsEnabled">View counts (cookie-less; no IPs or user agents are ever stored)</label>
                 </div>
+                <div class="form-check my-2">
+                    <input class="form-check-input" type="checkbox" name="blogFederationEnabled" id="blogFederationEnabled"
+                           <?= !empty($siteConfig['federationEnabled']) ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="blogFederationEnabled">Fediverse federation (ActivityPub, experimental)</label>
+                </div>
+                <?php
+                $fedHost = (string) (parse_url((string) $siteConfig['domain'], PHP_URL_HOST) ?: ($_SERVER['HTTP_HOST'] ?? ''));
+                $fedHandle = (string) ($siteConfig['apHandle'] ?: 'blog');
+                ?>
+                <?php if (!empty($siteConfig['federationEnabled'])): ?>
+                    <p class="my-1"><small>Followable as <code>@<?= e($fedHandle) ?>@<?= e($fedHost) ?></code>.
+                        The handle is locked while federation is on — changing it would orphan followers.
+                        Requires HTTPS; changing the site domain also orphans followers.</small></p>
+                <?php else: ?>
+                    <label>Fediverse handle (sets <code>@handle@<?= e($fedHost) ?></code>; locked once enabled)</label>
+                    <input class="form-control" type="text" name="blogApHandle"
+                           value="<?= e($fedHandle) ?>" />
+                <?php endif; ?>
                 <label><?php i18n("settings_posts_per_page"); ?></label>
                 <input class="form-control" type="number" name="blogPostsPerPage" min="1" required value="<?= e((string) $siteConfig['postsPerPage']) ?>" />
                 <label><?php i18n("settings_timezone"); ?></label>

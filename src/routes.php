@@ -740,6 +740,12 @@ $router->map('GET|POST', '/settings', function () use ($configStore, $siteConfig
             'paletteOverrides' => $siteConfig['paletteOverrides'] ?? [],
             'searchEnabled' => !empty($_POST['blogSearchEnabled']),
             'statsEnabled' => !empty($_POST['blogStatsEnabled']),
+            'federationEnabled' => !empty($_POST['blogFederationEnabled']),
+            // The handle is part of the actor's identity: locked once
+            // federation has been on (changing it would orphan followers).
+            'apHandle' => !empty($siteConfig['federationEnabled'])
+                ? (string) ($siteConfig['apHandle'] ?: 'blog')
+                : (trim((string) ($_POST['blogApHandle'] ?? '')) !== '' ? fn_slugify((string) $_POST['blogApHandle']) : 'blog'),
             'trustedProxies' => fn_clean($_POST['blogTrustedProxies'] ?? ''),
             'postsPerPage' => $postsPerPage,
             'basePath'     => fn_clean($_POST['blogBase'] ?? ''),
@@ -1095,6 +1101,132 @@ $router->map('POST', '/admin/themes/apply', function () use ($requireConfig, $re
 }, 'applyTheme');
 
 // ---------------------------------------------------------------------------
+// ActivityPub, phase AP-1 (docs/activitypub-spec.md): followable, silent.
+// All endpoints 404 unless federation is enabled in settings.
+// ---------------------------------------------------------------------------
+
+$fnApBase    = rtrim((string) $siteConfig['domain'], '/') ?: fn_request_base();
+$fnActorUrl  = $fnApBase . '/ap/actor';
+$fnApHandle  = (string) ($siteConfig['apHandle'] ?: 'blog');
+$fnFedOn     = !empty($siteConfig['federationEnabled']);
+$federation  = new Federation(FN_DATA_DIR, $fnActorUrl);
+
+$router->map('GET', '/.well-known/webfinger', function () use ($fnFedOn, $fnApBase, $fnActorUrl, $fnApHandle, $notFound) {
+    if (!$fnFedOn) {
+        $notFound();
+    }
+    $host = (string) parse_url($fnApBase, PHP_URL_HOST)
+        . (parse_url($fnApBase, PHP_URL_PORT) ? ':' . parse_url($fnApBase, PHP_URL_PORT) : '');
+    $acct = "acct:$fnApHandle@$host";
+    if (!in_array((string) ($_GET['resource'] ?? ''), [$acct, $fnActorUrl], true)) {
+        $notFound();
+    }
+    header('Content-Type: application/jrd+json');
+    echo json_encode([
+        'subject' => $acct,
+        'links'   => [['rel' => 'self', 'type' => 'application/activity+json', 'href' => $fnActorUrl]],
+    ], JSON_UNESCAPED_SLASHES);
+    exit;
+}, 'webfinger');
+
+$router->map('GET', '/ap/actor', function () use ($fnFedOn, $siteConfig, $federation, $fnApBase, $fnActorUrl, $fnApHandle, $router, $notFound) {
+    if (!$fnFedOn) {
+        $notFound();
+    }
+    $doc = [
+        '@context' => ['https://www.w3.org/ns/activitystreams', 'https://w3id.org/security/v1'],
+        'id'                => $fnActorUrl,
+        'type'              => 'Person',
+        'preferredUsername' => $fnApHandle,
+        'name'              => $siteConfig['name'] !== '' ? (string) $siteConfig['name'] : 'Fieldnote',
+        'summary'           => (string) $siteConfig['info'],
+        'url'               => $fnApBase . $router->generate('home'),
+        'inbox'             => $fnApBase . '/ap/inbox',
+        'outbox'            => $fnApBase . '/ap/outbox',
+        'followers'         => $fnApBase . '/ap/followers',
+        'manuallyApprovesFollowers' => false,
+        'publicKey' => [
+            'id'           => $fnActorUrl . '#main-key',
+            'owner'        => $fnActorUrl,
+            'publicKeyPem' => $federation->keys()['public'],
+        ],
+    ];
+    if ((string) $siteConfig['OGImage'] !== '') {
+        $icon = (string) $siteConfig['OGImage'];
+        $doc['icon'] = ['type' => 'Image', 'url' => str_starts_with($icon, '/') ? $fnApBase . $icon : $icon];
+    }
+    header('Content-Type: application/activity+json');
+    echo json_encode($doc, JSON_UNESCAPED_SLASHES);
+    exit;
+}, 'apActor');
+
+$router->map('POST', '/ap/inbox', function () use ($fnFedOn, $federation, $fnActorUrl, $notFound) {
+    if (!$fnFedOn) {
+        $notFound();
+    }
+    $body = (string) file_get_contents('php://input');
+    if (strlen($body) > 65536) {
+        http_response_code(413);
+        exit;
+    }
+    $activity = $federation->verifyInbox($body);
+    if ($activity === null) {
+        http_response_code(401);
+        exit;
+    }
+
+    $type = (string) ($activity['type'] ?? '');
+    if ($type === 'Follow' && ($activity['object'] ?? null) === $fnActorUrl) {
+        $actor = $federation->fetchActor((string) $activity['actor']);
+        $inbox = (string) ($actor['inbox'] ?? '');
+        if ($inbox !== '') {
+            $federation->addFollower(
+                (string) $activity['actor'],
+                $inbox,
+                (string) ($actor['endpoints']['sharedInbox'] ?? '')
+            );
+            $federation->deliverAccept($activity, $inbox);
+        }
+    } elseif ($type === 'Undo' && (($activity['object']['type'] ?? '') === 'Follow')) {
+        $federation->removeFollower((string) $activity['actor']);
+    }
+    // Every other type: acknowledged and dropped — never an error oracle.
+    http_response_code(202);
+    exit;
+}, 'apInbox');
+
+$router->map('GET', '/ap/outbox', function () use ($fnFedOn, $fnApBase, $notFound) {
+    if (!$fnFedOn) {
+        $notFound();
+    }
+    // AP-1 is followable-but-silent; posts arrive in AP-2.
+    header('Content-Type: application/activity+json');
+    echo json_encode([
+        '@context'     => 'https://www.w3.org/ns/activitystreams',
+        'id'           => $fnApBase . '/ap/outbox',
+        'type'         => 'OrderedCollection',
+        'totalItems'   => 0,
+        'orderedItems' => [],
+    ], JSON_UNESCAPED_SLASHES);
+    exit;
+}, 'apOutbox');
+
+$router->map('GET', '/ap/followers', function () use ($fnFedOn, $federation, $fnApBase, $notFound) {
+    if (!$fnFedOn) {
+        $notFound();
+    }
+    // Count only: the member list is nobody else's business.
+    header('Content-Type: application/activity+json');
+    echo json_encode([
+        '@context'   => 'https://www.w3.org/ns/activitystreams',
+        'id'         => $fnApBase . '/ap/followers',
+        'type'       => 'OrderedCollection',
+        'totalItems' => count($federation->followers()),
+    ], JSON_UNESCAPED_SLASHES);
+    exit;
+}, 'apFollowers');
+
+// ---------------------------------------------------------------------------
 // Export / import (roadmap 3.1)
 // ---------------------------------------------------------------------------
 
@@ -1349,12 +1481,25 @@ $router->map('GET', '/dashboard', function () use ($requireConfig, $requireAuth,
 // Dispatch
 // ---------------------------------------------------------------------------
 
-// A POST whose body exceeded post_max_size reaches PHP with $_POST and
+// The ActivityPub inbox receives signed JSON from remote servers: no CSRF
+// token, no form body. Its authentication is the HTTP signature (verified
+// in the handler), so both form-centric gates below must skip it. Path-based
+// on purpose: with federation off the handler itself answers 404.
+$fnIsApInbox = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST'
+    && (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH)
+        === rtrim((string) $siteConfig['basePath'], '/') . '/ap/inbox';
+
+// A FORM post whose body exceeded post_max_size reaches PHP with $_POST and
 // $_FILES completely empty. Without this check the user would get a baffling
 // CSRF error (the token vanished with everything else) — or worse, silently
-// lose a written post. Say what actually happened.
+// lose a written post. Say what actually happened. Scoped to form content
+// types: those are the only ones PHP ever populates $_POST from, so a JSON
+// body would always trip this otherwise.
+$fnContentType = strtolower((string) ($_SERVER['CONTENT_TYPE'] ?? ''));
 if (
-    $_SERVER['REQUEST_METHOD'] === 'POST'
+    !$fnIsApInbox
+    && $_SERVER['REQUEST_METHOD'] === 'POST'
+    && (str_starts_with($fnContentType, 'application/x-www-form-urlencoded') || str_starts_with($fnContentType, 'multipart/form-data'))
     && empty($_POST) && empty($_FILES)
     && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0
 ) {
@@ -1389,7 +1534,9 @@ if (!empty($fnCanonical['host']) && in_array($_SERVER['REQUEST_METHOD'] ?? 'GET'
 }
 
 // Enforce CSRF once, centrally, for every POST before any handler runs.
-Security::requireValidCsrf();
+if (!$fnIsApInbox) {
+    Security::requireValidCsrf();
+}
 
 // Public pages get a strict CSP whenever the admin hasn't injected custom
 // head markup (which may legitimately carry inline analytics). Sent before
