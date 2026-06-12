@@ -421,6 +421,9 @@ $router->map('GET|POST', '/settings', function () use ($configStore, $siteConfig
             'headerInject' => (string) ($_POST['blogHeaderInject'] ?? ''),
             'password'     => $password,
             'template'     => basename(fn_clean($_POST['blogTemplate'])),
+            // Not part of this form; carried over or it would vanish on
+            // every settings save. (Theme-keyed: inert after a switch.)
+            'paletteOverrides' => $siteConfig['paletteOverrides'] ?? [],
             'postsPerPage' => $postsPerPage,
             'basePath'     => fn_clean($_POST['blogBase'] ?? ''),
             'timezone'     => fn_clean($_POST['blogTimezone']),
@@ -617,7 +620,18 @@ $router->map('GET', '/admin/themes/preview/[:theme]', function ($theme) use ($re
         $css  = (string) @file_get_contents(fn_template_dir($name) . '/assets/theme.css');
         $body = CssTokens::schemeBlock($css, $scheme) ?? CssTokens::rootBlock($css);
         if ($body !== null) {
-            $GLOBALS['fnSchemeOverrideCss'] = ':root{' . trim($body) . ';color-scheme:' . $scheme . '}';
+            // Previewing the active theme: replay saved palette overrides
+            // after the theme tokens so the miniature matches the live site.
+            $extra = '';
+            $po = $siteConfig['paletteOverrides'] ?? [];
+            if ($name === $siteConfig['template'] && is_array($po) && ($po['theme'] ?? '') === $name) {
+                foreach ((array) ($po[$scheme] ?? []) as $tok => $val) {
+                    if (preg_match('/^--[a-z0-9-]+$/', (string) $tok) && preg_match('/^#[0-9a-f]{6}$/i', (string) $val)) {
+                        $extra .= $tok . ':' . $val . ';';
+                    }
+                }
+            }
+            $GLOBALS['fnSchemeOverrideCss'] = ':root{' . trim($body) . ';' . $extra . 'color-scheme:' . $scheme . '}';
         }
     }
 
@@ -633,6 +647,113 @@ $router->map('GET', '/admin/themes/preview/[:theme]', function ($theme) use ($re
         $numPages
     );
 }, 'themePreview');
+
+// Palette customizer: override the active theme's color tokens, with the
+// auditor's WCAG math run server-side on save — a palette that fails the
+// contrast matrix cannot be stored, only corrected.
+$router->map('GET|POST', '/admin/palette', function () use ($requireConfig, $requireAuth, $configStore, $siteConfig, $router, $redirect) {
+    $requireConfig();
+    $requireAuth();
+
+    $theme = (string) $siteConfig['template'];
+    $css   = (string) @file_get_contents(fn_template_dir($theme) . '/assets/theme.css');
+
+    // Resolve the theme's own tokens per scheme, exactly as the auditor does:
+    // :root is the default scheme, the media block overrides the other one.
+    $rootTokens = CssTokens::extractTokens((string) CssTokens::rootBlock($css));
+    $darkBody   = CssTokens::schemeBlock($css, 'dark');
+    $lightBody  = CssTokens::schemeBlock($css, 'light');
+    $schemeTok  = CssTokens::extractTokens((string) ($darkBody ?? $lightBody ?? ''));
+    $themeTokens = ($darkBody !== null || $lightBody === null)
+        ? ['light' => $rootTokens, 'dark' => array_merge($rootTokens, $schemeTok)]
+        : ['dark' => $rootTokens, 'light' => array_merge($rootTokens, $schemeTok)];
+
+    // Hex-normalized theme defaults (color inputs only accept #rrggbb).
+    $themeDefaults = ['light' => [], 'dark' => []];
+    foreach (['light', 'dark'] as $scheme) {
+        foreach (Wcag::REQUIRED_TOKENS as $tok) {
+            $rgb = Wcag::parseColor($themeTokens[$scheme][$tok] ?? '');
+            $themeDefaults[$scheme][$tok] = $rgb !== null ? Wcag::toHex($rgb) : '#000000';
+        }
+    }
+
+    $saved = $siteConfig['paletteOverrides'] ?? [];
+    if (!is_array($saved) || ($saved['theme'] ?? '') !== $theme) {
+        $saved = [];
+    }
+
+    // What the form shows: theme defaults overlaid with saved overrides.
+    $values = $themeDefaults;
+    foreach (['light', 'dark'] as $scheme) {
+        foreach ((array) ($saved[$scheme] ?? []) as $tok => $val) {
+            $values[$scheme][$tok] = $val;
+        }
+    }
+
+    $failures = [];
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (($_POST['paletteAction'] ?? '') === 'reset') {
+            $siteConfig['paletteOverrides'] = [];
+            $configStore->save($siteConfig);
+            $_SESSION['palette_saved'] = 'Palette reset to theme defaults.';
+            $redirect('palette');
+        }
+
+        $newOverrides = ['theme' => $theme, 'light' => [], 'dark' => []];
+        foreach (['light', 'dark'] as $scheme) {
+            $effective = [];
+            foreach (Wcag::REQUIRED_TOKENS as $tok) {
+                $v = strtolower(trim((string) ($_POST['tok'][$scheme][$tok] ?? '')));
+                if (!preg_match('/^#[0-9a-f]{6}$/', $v)) {
+                    $v = $themeDefaults[$scheme][$tok];
+                }
+                $effective[$tok] = $v;
+                if ($v !== $themeDefaults[$scheme][$tok]) {
+                    $newOverrides[$scheme][$tok] = $v;
+                }
+            }
+            foreach (Wcag::failingPairs($effective) as $f) {
+                $f['suggest'] = Wcag::suggestColor($effective[$f['fg']], $effective[$f['bg']], $f['min']);
+                $failures[$scheme][] = $f;
+            }
+            $values[$scheme] = $effective; // re-show exactly what was submitted
+        }
+
+        if ($failures === []) {
+            $siteConfig['paletteOverrides'] =
+                ($newOverrides['light'] === [] && $newOverrides['dark'] === []) ? [] : $newOverrides;
+            if (!$configStore->save($siteConfig)) {
+                http_response_code(500);
+                exit('Unable to write configuration. Check that the data/ directory is writable.');
+            }
+            $_SESSION['palette_saved'] = 'Palette saved — every pair passes WCAG 2.2 AA.';
+            $redirect('palette');
+        }
+        // fall through: re-render with failures and suggestions
+    }
+
+    // The one-click correction form: current values with each failing
+    // foreground replaced by its computed nearest-passing shade.
+    $suggestedValues = null;
+    if ($failures !== []) {
+        $suggestedValues = $values;
+        foreach ($failures as $scheme => $list) {
+            foreach ($list as $f) {
+                if ($f['suggest'] === null) {
+                    $suggestedValues = null;
+                    break 2;
+                }
+                $suggestedValues[$scheme][$f['fg']] = $f['suggest'];
+            }
+        }
+    }
+
+    $pageTitle = 'Palette';
+    $savedNotice = (string) ($_SESSION['palette_saved'] ?? '');
+    unset($_SESSION['palette_saved']);
+    require FN_INTERNAL_DIR . '/palette.php';
+}, 'palette');
 
 $router->map('POST', '/admin/themes/apply', function () use ($requireConfig, $requireAuth, $configStore, $siteConfig, $redirect, $notFound) {
     $requireConfig();

@@ -16,7 +16,7 @@ Phase 3 builds writer trust. Phase 0 pays debts found in review first.
 
 ## Phase 0 — fixes from code review
 
-### 0.1 Clean up replaced images (S)
+### 0.1 Clean up replaced images (S) — SHIPPED
 
 **Problem:** `editPost` and `write` insert a new image record and repoint
 `post['image']` but never delete the record/file being replaced
@@ -34,7 +34,7 @@ not referenced by any post and files not referenced by any record;
 **Accept:** replacing a featured image removes the old file and record;
 prune script reports zero on a clean store; dry-run by default.
 
-### 0.2 Stop counting all posts on every request (S)
+### 0.2 Stop counting all posts on every request (S) — SHIPPED
 
 **Problem:** `$numPages` (src/routes.php:37) loads every published document
 on every request — including theme-asset and feed hits — just to count them.
@@ -48,7 +48,7 @@ first-publish inside edit/write saves. Regenerate lazily on next read.
 publish/hide/delete immediately reflect in pagination; cache file absent →
 regenerated.
 
-### 0.3 Conditional GET on the feed (S)
+### 0.3 Conditional GET on the feed (S) — SHIPPED
 
 **Problem:** `/feed` re-renders 20 posts of markdown on every poll, and feed
 readers poll constantly. No `ETag`/`Last-Modified`.
@@ -109,7 +109,7 @@ welcome). New rule for future work: admin-facing strings go through `i18n()`.
 **Accept:** `grep` finds no user-visible hardcoded strings in internal/
 views; en/fr/uk arrays have identical key sets.
 
-### 0.7 Smoke test + CI (M)
+### 0.7 Smoke test + CI (M) — SHIPPED
 
 **Problem:** the only automated check is the theme auditor. Refactors are
 verified by hand (forged-session curl loops — which caught a real regression
@@ -131,7 +131,7 @@ theme preview override present. Exit non-zero on any failure. GitHub Action:
 
 ## Phase 1 — the accessibility wedge
 
-### 1.1 Palette customizer that refuses to be inaccessible (L) — the headline
+### 1.1 Palette customizer that refuses to be inaccessible (L) — the headline — SHIPPED
 
 No platform anywhere can say "you cannot ship an inaccessible color scheme,
 even on purpose." All the hard parts already exist: `CssTokens` parses theme

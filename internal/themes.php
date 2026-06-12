@@ -8,6 +8,7 @@ require __DIR__ . '/header.php';
 <p class="text-center text-muted">Live previews of every installed theme, light and dark. Applying changes the public site immediately.</p>
 <div class="text-center mb-4">
     <a href="<?= e($router->generate('dashboard')) ?>" class="btn btn-secondary"><?php i18n("settings_dashboard_return"); ?></a>
+    <a href="<?= e($router->generate('palette')) ?>" class="btn btn-secondary">Customize palette</a>
     <a href="<?= e($router->generate('settings')) ?>" class="btn btn-secondary"><?php i18n("dashboard_settings"); ?></a>
 </div>
 <div class="theme-grid">

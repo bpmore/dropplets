@@ -243,6 +243,42 @@ function fn_pagination(\AltoRouter $router, int $page, int $numPages): void
 }
 
 /**
+ * Admin palette overrides as CSS, or '' when none apply. Overrides are tied
+ * to the theme they were authored for (template name stored alongside), so
+ * switching themes silently retires them instead of corrupting the new theme.
+ * Both schemes are emitted media-scoped — polarity-independent: light
+ * overrides apply in light mode whether the theme is light- or dark-default.
+ *
+ * @param array<string,mixed> $siteConfig
+ */
+function fn_palette_css(array $siteConfig): string
+{
+    $overrides = $siteConfig['paletteOverrides'] ?? [];
+    if (!is_array($overrides) || ($overrides['theme'] ?? '') !== $siteConfig['template']) {
+        return '';
+    }
+    $block = static function (array $tokens): string {
+        $css = '';
+        foreach ($tokens as $name => $value) {
+            // Both halves were validated at save time; the regex here is
+            // belt-and-suspenders against a hand-edited config.
+            if (preg_match('/^--[a-z0-9-]+$/', (string) $name) && preg_match('/^#[0-9a-f]{6}$/i', (string) $value)) {
+                $css .= $name . ':' . $value . ';';
+            }
+        }
+        return $css;
+    };
+    $css = '';
+    foreach (['light', 'dark'] as $scheme) {
+        $body = $block((array) ($overrides[$scheme] ?? []));
+        if ($body !== '') {
+            $css .= '@media (prefers-color-scheme: ' . $scheme . '){:root{' . $body . '}}';
+        }
+    }
+    return $css;
+}
+
+/**
  * Emit the shared <head> content every theme needs: charset, viewport, title,
  * theme stylesheet, favicon, RSS discovery, canonical URL, OpenGraph/Twitter
  * cards, and the admin's headerInject snippet. Themes call this from their
@@ -282,6 +318,12 @@ function fn_render_head(array $siteConfig, \AltoRouter $router, string $pageTitl
     echo '<title>' . e($fullTitle) . '</title>' . "\n";
     echo '<style>' . fn_a11y_base_css() . '</style>' . "\n";
     echo '<link rel="stylesheet" href="' . e($themeCssHref) . '">' . "\n";
+    // Palette overrides authored in /admin/palette — WCAG-validated at save
+    // time. Emitted before any preview scheme-force so a forced preview wins.
+    $paletteCss = fn_palette_css($siteConfig);
+    if ($paletteCss !== '') {
+        echo '<style>' . $paletteCss . '</style>' . "\n";
+    }
     // Admin theme previews force a color scheme by re-declaring the token
     // block AFTER the stylesheet, where it outranks the theme's own
     // prefers-color-scheme override. Themes don't pass this parameter; the

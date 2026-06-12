@@ -244,6 +244,58 @@ if (isset($m[1])) {
     check('tokened apply switches theme', $s === 302 && $s2 === 200 && str_contains($b2, '/themes/zen/theme.css'), "status $s");
 }
 
+// ---------------------------------------------------------------- palette --
+
+// The fixture still uses gazette here (apply-theme test above runs after
+// re-reading; order matters) — switch back explicitly to be self-contained.
+[, , $b] = req('GET', "$base/admin/themes", $authed);
+preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+req('POST', "$base/admin/themes/apply", $authed + ['body' => 'theme=gazette&csrf_token=' . $m[1]]);
+
+/** @return array<string,array<string,string>> scheme => token => hex */
+function formColors(string $html, string $type): array
+{
+    $values = [];
+    preg_match_all(
+        '/<input type="' . $type . '"[^>]*name="tok\[(\w+)\]\[(--[a-z-]+)\]"[^>]*value="(#[0-9a-f]{6})"/i',
+        $html,
+        $m,
+        PREG_SET_ORDER
+    );
+    foreach ($m as $hit) {
+        $values[$hit[1]][$hit[2]] = $hit[3];
+    }
+    return $values;
+}
+
+[$s, , $b] = req('GET', "$base/admin/palette", $authed);
+$colors = formColors($b, 'color');
+preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+check('palette page renders all token inputs', $s === 200 && count($colors['light'] ?? []) === 8 && count($colors['dark'] ?? []) === 8, "status $s");
+
+// Submit a failing palette: light gray body text on gazette's light paper.
+$colors['light']['--text'] = '#aaaaaa';
+[$s, , $b] = req('POST', "$base/admin/palette", $authed + [
+    'body' => http_build_query(['csrf_token' => $m[1], 'tok' => $colors]),
+]);
+check('failing palette is rejected with suggestions', $s === 200 && str_contains($b, 'Not saved') && str_contains($b, 'Apply suggested fixes'), "status $s");
+
+// Apply the server's own suggested fixes — must save.
+$suggested = formColors($b, 'hidden');
+preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+[$s] = req('POST', "$base/admin/palette", $authed + [
+    'body' => http_build_query(['csrf_token' => $m[1], 'tok' => $suggested]),
+]);
+[$s2, , $b2] = req('GET', "$base/");
+check('suggested palette saves and renders', $s === 302 && str_contains($b2, '@media (prefers-color-scheme: light){:root{--text:'), "status $s");
+
+// Reset restores stock rendering.
+[, , $b] = req('GET', "$base/admin/palette", $authed);
+preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+[$s] = req('POST', "$base/admin/palette", $authed + ['body' => 'paletteAction=reset&csrf_token=' . $m[1]]);
+[, , $b2] = req('GET', "$base/");
+check('palette reset clears overrides', $s === 302 && !str_contains($b2, 'prefers-color-scheme: light){:root{--text:'), "status $s");
+
 // ---------------------------------------------------------------- summary --
 
 echo "\n" . ($failures === 0 ? 'All checks passed.' : "$failures check(s) FAILED.") . "\n";

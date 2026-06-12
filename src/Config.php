@@ -27,6 +27,7 @@ final class Config
         'headerInject' => '',
         'password'     => '',
         'template'     => 'gazette',
+        'paletteOverrides' => [],
         'postsPerPage' => 6,
         'basePath'     => '',
         'timezone'     => 'America/New_York',

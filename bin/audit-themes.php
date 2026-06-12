@@ -27,60 +27,18 @@ if (PHP_SAPI !== 'cli') {
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 use Fieldnote\CssTokens;
+use Fieldnote\Wcag;
 
-const REQUIRED_TOKENS = ['--bg', '--surface', '--text', '--muted', '--accent', '--accent-contrast', '--line', '--focus'];
-
-// [foreground, background, minimum ratio]
-const PAIR_MATRIX = [
-    ['--text', '--bg', 4.5],
-    ['--text', '--surface', 4.5],
-    ['--muted', '--bg', 4.5],
-    ['--muted', '--surface', 4.5],
-    ['--accent', '--bg', 4.5],
-    ['--accent', '--surface', 4.5],
-    ['--accent-contrast', '--accent', 4.5],
-    ['--line', '--bg', 3.0],
-    ['--focus', '--bg', 3.0],
-];
+// Color math and the token contract live in Fieldnote\Wcag, shared with the
+// admin palette customizer so a palette the auditor would reject can never
+// be saved from the UI either.
+const REQUIRED_TOKENS = Wcag::REQUIRED_TOKENS;
+const PAIR_MATRIX = Wcag::PAIR_MATRIX;
 
 $templatesDir = dirname(__DIR__) . '/templates';
 $only = array_slice($argv, 1);
 
 $failures = 0;
-
-/** Parse a CSS color literal to [r,g,b] 0-255, or null if unsupported. */
-function parseColor(string $value): ?array
-{
-    $value = strtolower(trim($value));
-    if (preg_match('/^#([0-9a-f]{3})$/', $value, $m)) {
-        return [hexdec($m[1][0] . $m[1][0]), hexdec($m[1][1] . $m[1][1]), hexdec($m[1][2] . $m[1][2])];
-    }
-    if (preg_match('/^#([0-9a-f]{6})([0-9a-f]{2})?$/', $value, $m)) {
-        return [hexdec(substr($m[1], 0, 2)), hexdec(substr($m[1], 2, 2)), hexdec(substr($m[1], 4, 2))];
-    }
-    if (preg_match('/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/', $value, $m)) {
-        return [(int) $m[1], (int) $m[2], (int) $m[3]];
-    }
-    $named = ['white' => [255, 255, 255], 'black' => [0, 0, 0]];
-    return $named[$value] ?? null;
-}
-
-function relativeLuminance(array $rgb): float
-{
-    $chan = array_map(static function (int $c): float {
-        $c /= 255;
-        return $c <= 0.04045 ? $c / 12.92 : (($c + 0.055) / 1.055) ** 2.4;
-    }, $rgb);
-    return 0.2126 * $chan[0] + 0.7152 * $chan[1] + 0.0722 * $chan[2];
-}
-
-function contrast(array $a, array $b): float
-{
-    $l1 = relativeLuminance($a);
-    $l2 = relativeLuminance($b);
-    [$hi, $lo] = $l1 >= $l2 ? [$l1, $l2] : [$l2, $l1];
-    return ($hi + 0.05) / ($lo + 0.05);
-}
 
 // Token-block parsing lives in Fieldnote\CssTokens, shared with the admin
 // theme preview so the two never drift.
@@ -134,13 +92,13 @@ foreach ($themes as $name => $dir) {
                     if (!isset($tokens[$fgTok], $tokens[$bgTok])) {
                         continue; // missing token already reported
                     }
-                    $fg = parseColor($tokens[$fgTok]);
-                    $bg = parseColor($tokens[$bgTok]);
+                    $fg = Wcag::parseColor($tokens[$fgTok]);
+                    $bg = Wcag::parseColor($tokens[$bgTok]);
                     if ($fg === null || $bg === null) {
                         $problems[] = "[$schemeName] unparsable color in $fgTok or $bgTok";
                         continue;
                     }
-                    $ratio = contrast($fg, $bg);
+                    $ratio = Wcag::contrast($fg, $bg);
                     if ($ratio < $min) {
                         $problems[] = sprintf('[%s] %s on %s = %.2f:1 (need %.1f:1)', $schemeName, $fgTok, $bgTok, $ratio, $min);
                     }

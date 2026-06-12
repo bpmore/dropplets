@@ -170,3 +170,46 @@ h2 {
     vertical-align: middle;
     margin-right: .5rem;
 }
+
+/* Palette customizer (internal/palette.php) */
+.palette-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+    gap: 1.5rem;
+    max-width: 56rem;
+    margin: 0 auto;
+}
+
+.palette-scheme legend {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.palette-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .3rem 0;
+}
+
+.palette-row label {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.palette-row input[type="color"] {
+    inline-size: 3rem;
+    block-size: 2rem;
+    padding: 0;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.palette-swatch {
+    inline-size: 1.5rem;
+    block-size: 1.2rem;
+    padding: 0;
+    border: 1px solid #dee2e6;
+    vertical-align: middle;
+}

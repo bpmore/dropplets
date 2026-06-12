@@ -19,6 +19,13 @@ slips. Keyboard users get a skip link and a visible focus ring on every
 theme. Motion stops dead under `prefers-reduced-motion`. Layouts reflow at
 320 px with no horizontal scroll, so the site works at 400 % zoom.
 
+**Recolor any theme — it won't let you break accessibility.** The palette
+customizer overrides any theme's eight color tokens, light and dark scheme
+each, with the auditor's WCAG math running server-side on save. A
+combination that fails contrast cannot be stored: Fieldnote computes the
+nearest passing shade of *your* color (same hue, adjusted lightness) and
+offers it back as a one-click fix.
+
 **Zero JavaScript, genuinely.** Public pages ship markup and one 4–8 KB
 stylesheet. Nothing else. No webfonts, no CDNs, no analytics snippet
 phoning home — every asset is served from your own domain. Pages are fast
@@ -81,6 +88,11 @@ docker compose up --build
 ## Manage your blog
 
 Go to `https://your-domain/dashboard`. Writing, editing, publishing, hiding, deleting, settings, and logout all live there.
+
+The **theme gallery** (`/admin/themes`) shows live light + dark previews of
+every installed theme with one-click apply, and links to the **palette
+customizer** (`/admin/palette`) for recoloring the active theme under WCAG
+enforcement.
 
 ### Two-factor login (optional)
 
