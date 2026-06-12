@@ -332,7 +332,7 @@ round-trips; revisions never render publicly or in the feed.
 
 ## Phase 4 — moonshot (needs its own spec before any code)
 
-### 4.1 ActivityPub federation (XL)
+### 4.1 ActivityPub federation (XL) — spec written (docs/activitypub-spec.md), awaiting go/no-go
 
 Every Fieldnote blog followable from Mastodon — WriteFreely's headline
 feature on top of a far better theming/accessibility story. Scope sketch:
