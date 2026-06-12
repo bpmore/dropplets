@@ -37,10 +37,12 @@ risograph overprints. Every theme answers `prefers-color-scheme`, so your
 blog follows each reader's preference automatically. The full roster is
 below.
 
-**A single password — and real two-factor.** One password runs the whole
-site, protected by bcrypt, rate limiting, and optional TOTP two-factor
-with single-use recovery codes. Works with 1Password, Google
-Authenticator, Authy, Apple Passwords, any standard authenticator.
+**A single password — plus passkeys and real two-factor.** One password
+runs the whole site, protected by bcrypt, rate limiting, and optional TOTP
+two-factor with single-use recovery codes. Or skip typing it entirely:
+register a **passkey** (Touch ID, Face ID, a security key) in Settings and
+sign in with that — phishing-proof, with the password always available as
+a fallback. Changing the password logs out every other device.
 
 **Flat files you can grep.** Posts live in a flat-file store, config is a
 PHP array, images are files on disk. Back up your blog with `cp -R`.
@@ -125,6 +127,18 @@ login asks for your password and then a 6-digit code.
 Recovery: each recovery code works once in place of a TOTP code. If you lose
 both the authenticator and the codes, delete `data/totp.json` on the server to
 fall back to password-only login.
+
+### Passkeys (optional)
+
+Settings → "Passkeys" → Add a passkey. Sign in afterwards with Touch ID /
+Face ID / your security key — no password typed. Notes:
+
+- Passkeys need HTTPS (a secure context). For local development:
+  `herd secure <site>` or use `localhost`.
+- They're bound to the site's domain; changing the domain orphans them
+  (password login is unaffected — just re-register).
+- Lost every device? Delete `data/passkeys.json` on the server; password
+  (+ TOTP) login keeps working throughout.
 
 Posts take comma-separated **tags**; each tag gets a page at `/tag/<name>`,
 and tags flow into both feeds as categories.

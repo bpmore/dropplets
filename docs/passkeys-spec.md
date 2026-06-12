@@ -1,6 +1,9 @@
 # Spec: Passkey (WebAuthn) login
 
-Status: proposed (June 2026)
+Status: implemented (June 2026). One execution note: full assertions can't
+be driven by the curl-based smoke test, so it covers the options endpoints,
+challenge single-use, and the fail-closed verify path; real-authenticator
+sign-in needs a manual pass (requires HTTPS — `herd secure` locally).
 
 ## Problem
 

@@ -126,6 +126,37 @@ $isNew = ($siteConfig['name'] === '');
             </div>
         </form>
         <?php if (Fieldnote\Security::isAuthenticated() && !$isNew): ?>
+            <fieldset class="my-3" id="passkeySection"
+                      data-options-url="<?= e($router->generate('passkeyCreateOptions')) ?>"
+                      data-register-url="<?= e($router->generate('passkeyRegister')) ?>"
+                      data-csrf="<?= e(Fieldnote\Security::csrfToken()) ?>">
+                <legend class="fs-6">Passkeys</legend>
+                <p class="mb-2"><small class="text-muted">Sign in with Touch ID, Face ID, or a security key —
+                    no password typed, nothing to phish. Your password keeps working as a fallback.</small></p>
+                <?php foreach ($passkeys->list() as $pk): ?>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="flex-grow-1"><?= e((string) $pk['label']) ?>
+                            <small class="text-muted">&middot; added <?= e(date('M j, Y', (int) $pk['createdAt'])) ?></small></span>
+                        <form method="post" action="<?= e($router->generate('passkeyDelete')) ?>"
+                              data-confirm="Remove this passkey?">
+                            <?= csrf_field() ?>
+                            <input type="hidden" name="id" value="<?= e((string) $pk['id']) ?>">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                        </form>
+                    </div>
+                <?php endforeach; ?>
+                <div class="d-flex gap-2">
+                    <input type="text" id="passkeyLabel" class="form-control form-control-sm my-0"
+                           placeholder="Label (e.g. MacBook Touch ID)">
+                    <button type="button" id="passkeyAdd" class="btn btn-sm btn-secondary text-nowrap">Add a passkey</button>
+                </div>
+                <p id="passkeyMsg" class="small mb-0" role="status"></p>
+                <?php if ($passkeys->enabled()): ?>
+                    <p class="mb-0 mt-1"><small class="text-muted">Passkeys are bound to this site's domain —
+                        changing the domain above orphans them (password login is unaffected).
+                        Lost all devices? Delete <code>data/passkeys.json</code> on the server.</small></p>
+                <?php endif; ?>
+            </fieldset>
             <form method="post" action="<?= e($router->generate('rotateSecret')) ?>" class="my-3"
                   data-confirm="Invalidate every draft share link ever issued?">
                 <?= csrf_field() ?>

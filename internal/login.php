@@ -8,6 +8,18 @@ require __DIR__ . '/header.php';
 <?php if (!empty($loginError)): ?>
     <div class="alert alert-danger" role="alert"><?= e($loginError) ?></div>
 <?php endif; ?>
+<?php if (!empty($passkeysEnabled)): ?>
+    <div class="text-center mb-3">
+        <button type="button" id="passkeyLogin" class="btn btn-success w-100"
+                data-options-url="<?= e($router->generate('passkeyLoginOptions')) ?>"
+                data-verify-url="<?= e($router->generate('passkeyLoginVerify')) ?>"
+                data-csrf="<?= e(Fieldnote\Security::csrfToken()) ?>">
+            Sign in with a passkey
+        </button>
+        <p id="passkeyLoginMsg" class="small mb-0" role="status"></p>
+        <p class="text-muted small mt-2 mb-0">&mdash; or use your password &mdash;</p>
+    </div>
+<?php endif; ?>
 <form method="post" action="<?= e($router->generate('login')) ?>">
     <?= csrf_field() ?>
     <fieldset>

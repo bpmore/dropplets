@@ -51,6 +51,18 @@ file_put_contents($tmp . '/data/totp.json', json_encode([
     'secret' => 'JBSWY3DPEHPK3PXP', 'lastCounter' => 0, 'recovery' => [],
 ]));
 
+// A fixture passkey so the login button and options endpoints activate.
+// (A real assertion can't be driven by curl; the verify failure path is.)
+file_put_contents($tmp . '/data/passkeys.json', json_encode([
+    'credentials' => [[
+        'id'        => 'ZmFrZS1jcmVkZW50aWFs',
+        'publicKey' => "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE\n-----END PUBLIC KEY-----",
+        'signCount' => 0,
+        'label'     => 'Fixture key',
+        'createdAt' => time(),
+    ]],
+]));
+
 // Migration markers: fixtures are already current-format.
 foreach (['.slugs-v1', '.pubdate-v1', '.imgrel-v1'] as $marker) {
     touch($tmp . '/data/' . $marker);
@@ -324,6 +336,39 @@ preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
 check('content lint flashes suggestions after save', $s === 302 && str_contains($b, 'Accessibility suggestions') && str_contains($b, 'click here'), "status $s");
 [, , $b] = req('GET', "$base/dashboard", $authed);
 check('lint flash shows exactly once', !str_contains($b, 'Accessibility suggestions'));
+
+// --------------------------------------------------------------- passkeys --
+
+// A logged-out visitor session (cookie reuse matters: the CSRF token and
+// WebAuthn challenge both live in it, exactly like the real JS flow).
+$visitorSid = 'fnsmoke' . bin2hex(random_bytes(8));
+file_put_contents("$sessionDir/sess_$visitorSid", '');
+$visitor = ['cookie' => 'fieldnote_sess=' . $visitorSid];
+
+[$s, , $b] = req('GET', "$base/login", $visitor);
+check('login page offers passkey sign-in', $s === 200 && str_contains($b, 'id="passkeyLogin"') && str_contains($b, 'passkeys.js'), "status $s");
+preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+
+[$s, , $b] = req('POST', "$base/login/passkey/options", $visitor + ['body' => 'csrf_token=' . $m[1]]);
+$json = json_decode($b, true);
+check('passkey login options are well-formed', $s === 200 && is_string($json['publicKey']['challenge'] ?? null) && ($json['publicKey']['rpId'] ?? '') === '127.0.0.1', "status $s");
+
+[$s, , $b] = req('POST', "$base/login/passkey/verify", $visitor + ['body' => http_build_query([
+    'csrf_token' => $m[1], 'id' => 'bm9wZQ', 'clientDataJSON' => 'AAAA', 'authenticatorData' => 'AAAA', 'signature' => 'AAAA',
+])]);
+check('garbage passkey assertion fails closed', $s === 400 && str_contains($b, 'Passkey sign-in failed'), "status $s");
+[$s] = req('POST', "$base/login/passkey/verify", $visitor + ['body' => http_build_query([
+    'csrf_token' => $m[1], 'id' => 'bm9wZQ', 'clientDataJSON' => 'AAAA', 'authenticatorData' => 'AAAA', 'signature' => 'AAAA',
+])]);
+check('replayed challenge is rejected', $s === 400, "status $s");
+@unlink("$sessionDir/sess_$visitorSid");
+
+[, , $b] = req('GET', "$base/settings", $authed);
+check('settings shows passkey management', str_contains($b, 'id="passkeySection"') && str_contains($b, 'Fixture key'));
+preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+[$s, , $b] = req('POST', "$base/settings/passkeys/options", $authed + ['body' => 'csrf_token=' . $m[1]]);
+$json = json_decode($b, true);
+check('passkey create options exclude existing credential', $s === 200 && count($json['publicKey']['excludeCredentials'] ?? []) === 1 && ($json['publicKey']['authenticatorSelection']['requireResidentKey'] ?? false) === true, "status $s");
 
 // ---------------------------------------------------------- theme gallery --
 

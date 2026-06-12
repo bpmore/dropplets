@@ -42,6 +42,21 @@ $numPages = max(1, (int) ceil($publishedCount / $postsPerPage));
 $uploadPublicBase = rtrim((string) $siteConfig['basePath'], '/') . '/uploads';
 $images = new ImageHandler(FN_UPLOAD_DIR, $uploadPublicBase);
 $twoFactor = new TwoFactor(FN_DATA_DIR);
+$passkeys = new Passkeys(FN_DATA_DIR);
+
+// WebAuthn relying party. The RP ID is the bare host (no scheme, no port);
+// passkeys are bound to it, so changing the site's domain orphans them —
+// documented in the spec and warned about in settings.
+$webauthn = static function () use ($siteConfig): \lbuchs\WebAuthn\WebAuthn {
+    $host = (string) (parse_url((string) $siteConfig['domain'], PHP_URL_HOST)
+        ?: preg_replace('/:\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? 'localhost')));
+    return new \lbuchs\WebAuthn\WebAuthn(
+        $siteConfig['name'] !== '' ? (string) $siteConfig['name'] : 'Fieldnote',
+        strtolower($host),
+        ['none'], // we don't care which vendor made the authenticator
+        true      // base64url binary fields in the JSON args
+    );
+};
 
 $redirect = static function (string $name, array $params = []) use ($router): void {
     header('Location: ' . $router->generate($name, $params));
@@ -669,7 +684,7 @@ $router->map('GET|POST', '/write', function () use ($requireConfig, $requireAuth
 // Settings / auth
 // ---------------------------------------------------------------------------
 
-$router->map('GET|POST', '/settings', function () use ($configStore, $siteConfig, $twoFactor, $router, $redirect) {
+$router->map('GET|POST', '/settings', function () use ($configStore, $siteConfig, $twoFactor, $passkeys, $router, $redirect) {
     // Reachable when no config exists yet (first-time setup) OR when authed.
     if (!(Security::isAuthenticated() || !$configStore->exists())) {
         $redirect('login');
@@ -748,10 +763,11 @@ $router->map('GET|POST', '/settings', function () use ($configStore, $siteConfig
     }
 
     $pageTitle = 'Settings';
+    $needsPasskeys = true; // footer loads the WebAuthn bundle only when set
     require FN_INTERNAL_DIR . '/settings.php';
 }, 'settings');
 
-$router->map('GET|POST', '/login', function () use ($configStore, $siteConfig, $twoFactor, $router, $redirect) {
+$router->map('GET|POST', '/login', function () use ($configStore, $siteConfig, $twoFactor, $passkeys, $router, $redirect) {
     $requireConfigExists = $configStore->exists();
     if (!$requireConfigExists) {
         $redirect('settings');
@@ -795,6 +811,8 @@ $router->map('GET|POST', '/login', function () use ($configStore, $siteConfig, $
     $pageTitle = 'Log In';
     $loginError = $_SESSION['login_error'] ?? '';
     unset($_SESSION['login_error']);
+    $passkeysEnabled = $passkeys->enabled();
+    $needsPasskeys   = $passkeysEnabled;
     require FN_INTERNAL_DIR . '/login.php';
 }, 'login');
 
@@ -1075,6 +1093,147 @@ $router->map('POST', '/admin/themes/apply', function () use ($requireConfig, $re
     }
     $redirect('themes');
 }, 'applyTheme');
+
+// ---------------------------------------------------------------------------
+// Passkeys (docs/passkeys-spec.md). All POST, so the central CSRF gate covers
+// them; the JS reads the token from the page it lives on.
+// ---------------------------------------------------------------------------
+
+$router->map('POST', '/settings/passkeys/options', function () use ($requireConfig, $requireAuth, $webauthn, $passkeys) {
+    $requireConfig();
+    $requireAuth();
+    $wa = $webauthn();
+    $args = $wa->getCreateArgs(
+        'admin',            // single-account model: one user, fixed handle
+        'admin',
+        'Fieldnote admin',
+        60,
+        true,               // resident/discoverable: usernameless sign-in
+        'required',         // user verification (biometric/PIN) is the 2nd factor
+        null,
+        array_map(static fn (array $c): string => Passkeys::b64uDecode($c['id']), $passkeys->list())
+    );
+    $_SESSION['passkey_challenge'] = [
+        'value' => $wa->getChallenge()->getBinaryString(),
+        'type'  => 'create',
+        'exp'   => time() + 120,
+    ];
+    header('Content-Type: application/json');
+    echo json_encode($args);
+    exit;
+}, 'passkeyCreateOptions');
+
+$router->map('POST', '/settings/passkeys/register', function () use ($requireConfig, $requireAuth, $webauthn, $passkeys) {
+    $requireConfig();
+    $requireAuth();
+    header('Content-Type: application/json');
+    $challenge = $_SESSION['passkey_challenge'] ?? null;
+    unset($_SESSION['passkey_challenge']); // single-use, whatever happens next
+    if (!is_array($challenge) || $challenge['type'] !== 'create' || $challenge['exp'] < time()) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Challenge missing or expired — try again.']);
+        exit;
+    }
+    try {
+        $data = $webauthn()->processCreate(
+            Passkeys::b64uDecode((string) ($_POST['clientDataJSON'] ?? '')),
+            Passkeys::b64uDecode((string) ($_POST['attestationObject'] ?? '')),
+            $challenge['value'],
+            true, // user verification
+            true
+        );
+        $passkeys->add(
+            Passkeys::b64uEncode((string) $data->credentialId),
+            (string) $data->credentialPublicKey,
+            (int) ($data->signatureCounter ?? 0),
+            fn_clean((string) ($_POST['label'] ?? ''))
+        );
+        echo json_encode(['ok' => true]);
+    } catch (\Throwable $e) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Registration failed: ' . $e->getMessage()]);
+    }
+    exit;
+}, 'passkeyRegister');
+
+$router->map('POST', '/settings/passkeys/delete', function () use ($requireConfig, $requireAuth, $passkeys, $redirect) {
+    $requireConfig();
+    $requireAuth();
+    $passkeys->remove((string) ($_POST['id'] ?? ''));
+    $redirect('settings');
+}, 'passkeyDelete');
+
+$router->map('POST', '/login/passkey/options', function () use ($requireConfig, $webauthn, $passkeys, $notFound) {
+    $requireConfig();
+    if (Security::isAuthenticated() || !$passkeys->enabled()) {
+        $notFound();
+    }
+    $wa = $webauthn();
+    // Empty credential list on purpose: discoverable credentials mean the
+    // authenticator picks the passkey, and no credential ids leak here.
+    $args = $wa->getGetArgs([], 60, true, true, true, true, true, 'required');
+    $_SESSION['passkey_challenge'] = [
+        'value' => $wa->getChallenge()->getBinaryString(),
+        'type'  => 'get',
+        'exp'   => time() + 120,
+    ];
+    header('Content-Type: application/json');
+    echo json_encode($args);
+    exit;
+}, 'passkeyLoginOptions');
+
+$router->map('POST', '/login/passkey/verify', function () use ($requireConfig, $webauthn, $passkeys, $router) {
+    $requireConfig();
+    header('Content-Type: application/json');
+    if (Security::isAuthenticated()) {
+        echo json_encode(['ok' => true, 'redirect' => $router->generate('dashboard')]);
+        exit;
+    }
+    // Shares the password throttle: guessing signatures is rate-limited the
+    // same as guessing passwords.
+    if (Security::loginLockedFor(FN_DATA_DIR) > 0) {
+        http_response_code(429);
+        echo json_encode(['error' => 'Too many failed attempts. Try again later.']);
+        exit;
+    }
+    $challenge = $_SESSION['passkey_challenge'] ?? null;
+    unset($_SESSION['passkey_challenge']);
+    if (!is_array($challenge) || $challenge['type'] !== 'get' || $challenge['exp'] < time()) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Challenge missing or expired — try again.']);
+        exit;
+    }
+    try {
+        $credential = $passkeys->find((string) ($_POST['id'] ?? ''));
+        if ($credential === null) {
+            throw new \RuntimeException('unknown credential');
+        }
+        $wa = $webauthn();
+        $wa->processGet(
+            Passkeys::b64uDecode((string) ($_POST['clientDataJSON'] ?? '')),
+            Passkeys::b64uDecode((string) ($_POST['authenticatorData'] ?? '')),
+            Passkeys::b64uDecode((string) ($_POST['signature'] ?? '')),
+            (string) $credential['publicKey'],
+            $challenge['value'],
+            ((int) $credential['signCount']) > 0 ? (int) $credential['signCount'] : null,
+            'required' // authenticator-side biometric/PIN is the second factor
+        );
+        $passkeys->updateSignCount((string) $credential['id'], (int) $wa->getSignatureCounter());
+
+        // The same ritual as every other successful login.
+        Security::regenerate();
+        Security::clearLoginFailures(FN_DATA_DIR);
+        $_SESSION['isAuthenticated'] = true;
+        Security::stampSessionEpoch();
+        echo json_encode(['ok' => true, 'redirect' => $router->generate('dashboard')]);
+    } catch (\Throwable $e) {
+        Security::recordLoginFailure(FN_DATA_DIR);
+        http_response_code(400);
+        // Generic on purpose: do not narrate what failed.
+        echo json_encode(['error' => 'Passkey sign-in failed.']);
+    }
+    exit;
+}, 'passkeyLoginVerify');
 
 // Rotating the app secret invalidates every draft share link ever issued
 // (a fresh secret is generated on next use).

@@ -12,6 +12,7 @@
         "altorouter/altorouter": "^2.0",
         "erusev/parsedown": "~1.7.4",
         "erusev/parsedown-extra": "^0.8",
+        "lbuchs/webauthn": "^2.2",
         "rakibtg/sleekdb": "^2.14"
     },
     "autoload": {
