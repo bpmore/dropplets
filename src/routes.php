@@ -280,19 +280,8 @@ $router->map('POST', '/post/[i:id]/delete', function ($id) use ($requireConfig, 
     if ($post === null) {
         $notFound();
     }
-    // Clean up the linked image record and its file on disk. Stored paths
-    // are relative to uploads/ (absolute = a pre-migration record).
-    if (isset($post['image']) && is_numeric($post['image'])) {
-        $record = $imageStore->findById((int) $post['image']);
-        $imagePath = (string) ($record['path'] ?? '');
-        if ($imagePath !== '' && !str_starts_with($imagePath, '/')) {
-            $imagePath = FN_UPLOAD_DIR . '/' . $imagePath;
-        }
-        if ($imagePath !== '' && is_file($imagePath)) {
-            @unlink($imagePath);
-        }
-        $imageStore->deleteById((int) $post['image']);
-    }
+    // Clean up the linked image record and its file on disk.
+    fn_delete_image($imageStore, $post['image'] ?? null);
     $blogStore->deleteById((int) $id);
     $redirect('dashboard');
 }, 'deletePost');
@@ -319,9 +308,11 @@ $router->map('GET|POST', '/post/[i:id]/edit', function ($id) use ($requireConfig
         $post['content'] = (string) $_POST['blogPostContent']; // markdown stored raw, escaped at render
         $post['password'] = fn_hash_post_password($_POST['blogPostPassword'] ?? '', $post['password'] ?? '');
 
-        // Replace the image only if a new upload or URL was supplied.
+        // Replace the image only if a new upload or URL was supplied —
+        // and clean up the one being replaced, or it leaks on disk forever.
         $newImage = fn_resolve_image($images, $_FILES['imageUpload'] ?? null, $_POST['blogPostImageURL'] ?? '');
         if ($newImage !== null) {
+            fn_delete_image($imageStore, $post['image'] ?? null);
             $rec = $imageStore->insert(['url' => $newImage[0], 'path' => $newImage[1]]);
             $post['image'] = $rec['_id'];
         }

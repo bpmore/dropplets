@@ -422,6 +422,31 @@ function fn_template_dir(string $name): string
 }
 
 /**
+ * Delete an image record and its file on disk. Stored paths are relative to
+ * uploads/ (an absolute path means a pre-migration record). The single
+ * cleanup path for post deletion AND image replacement — replacing used to
+ * leak the old file forever.
+ */
+function fn_delete_image(Store $imageStore, int|string|null $id): void
+{
+    if ($id === null || !is_numeric($id)) {
+        return;
+    }
+    $record = $imageStore->findById((int) $id);
+    if ($record === null) {
+        return;
+    }
+    $path = (string) ($record['path'] ?? '');
+    if ($path !== '' && !str_starts_with($path, '/')) {
+        $path = FN_UPLOAD_DIR . '/' . $path;
+    }
+    if ($path !== '' && is_file($path)) {
+        @unlink($path);
+    }
+    $imageStore->deleteById((int) $id);
+}
+
+/**
  * Attach a resolved public image URL to a post so templates never need to
  * touch the datastore themselves.
  *
