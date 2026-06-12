@@ -1,9 +1,10 @@
 # Spec: Passkey (WebAuthn) login
 
-Status: implemented (June 2026). One execution note: full assertions can't
-be driven by the curl-based smoke test, so it covers the options endpoints,
-challenge single-use, and the fail-closed verify path; real-authenticator
-sign-in needs a manual pass (requires HTTPS — `herd secure` locally).
+Status: implemented (June 2026); real-authenticator registration + sign-in
+manually verified 2026-06-12 (macOS, https://fieldnote.test via herd
+secure). The curl-based smoke test covers the options endpoints, challenge
+single-use, and the fail-closed verify path — full assertions need a real
+authenticator and HTTPS.
 
 ## Problem
 
