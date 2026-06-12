@@ -261,6 +261,37 @@ check('authed dashboard renders', $s === 200 && str_contains($b, 'Hello World'),
 check('2FA verify page renders', $s === 200 && str_contains($b, 'Two-Factor Verification'), "status $s");
 check('2FA verify page free of PHP warnings', !str_contains($b, 'Undefined variable') && !str_contains($b, 'Warning:'));
 
+// ----------------------------------------- draft share links + revisions --
+
+[, , $b] = req('GET', "$base/dashboard", $authed);
+preg_match('#(/draft/\d+/\d+/[a-f0-9]{32})#', $b, $m);
+check('dashboard offers a draft share link', isset($m[1]));
+if (isset($m[1])) {
+    [$s, , $b] = req('GET', $base . $m[1]); // logged out on purpose
+    check('share link renders the draft logged-out', $s === 200 && str_contains($b, 'SENTINEL-DRAFT-BODY'), "status $s");
+    [$s] = req('GET', $base . substr($m[1], 0, -1) . '0');
+    check('tampered share token 404s', $s === 404, "status $s");
+    [$s] = req('GET', $base . preg_replace('#/(\d+)/([a-f0-9]{32})$#', '/1111111111/$2', $m[1]));
+    check('tampered share expiry 404s', $s === 404, "status $s");
+}
+
+// Revisions: edit post 1's content, then restore the original.
+[, , $b] = req('GET', "$base/post/1/edit", $authed);
+preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+[$s] = req('POST', "$base/post/1/edit", $authed + ['body' => http_build_query([
+    'csrf_token'      => $m[1],
+    'blogPostTitle'   => 'Hello World',
+    'blogPostAuthor'  => 'Tester',
+    'blogPostContent' => 'Rewritten body.',
+    'blogPostTags'    => 'notes, testing',
+])]);
+[, , $b] = req('GET', "$base/post/1/edit", $authed);
+check('edit creates a revision', $s === 302 && str_contains($b, 'Revisions'), "status $s");
+preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+[$s] = req('POST', "$base/post/1/restore", $authed + ['body' => 'revision=0&csrf_token=' . $m[1]]);
+[, , $b] = req('GET', "$base/post/1/edit", $authed);
+check('restore brings the original text back', $s === 302 && str_contains($b, 'A **published** fixture post.'), "status $s");
+
 // ----------------------------------------------------------- content lint --
 
 [, , $b] = req('GET', "$base/dashboard", $authed);

@@ -104,6 +104,17 @@ $isNew = ($siteConfig['name'] === '');
                 <div class="col-md-3"></div>
             </div>
         </form>
+        <?php if (Fieldnote\Security::isAuthenticated() && !$isNew): ?>
+            <form method="post" action="<?= e($router->generate('rotateSecret')) ?>" class="my-3"
+                  data-confirm="Invalidate every draft share link ever issued?">
+                <?= csrf_field() ?>
+                <fieldset>
+                    <legend class="fs-6">Draft share links</legend>
+                    <p class="mb-2"><small class="text-muted">Each draft's Share button on the dashboard issues a signed link valid for 14 days. If one leaked:</small></p>
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Invalidate all share links</button>
+                </fieldset>
+            </form>
+        <?php endif; ?>
     </div>
     <div class="col-md-3"></div>
 </div>

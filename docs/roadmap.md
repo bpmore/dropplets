@@ -303,7 +303,7 @@ prune on write.
 view; no file under data/ ever contains an IP or UA string; disabling stops
 writes; dashboard renders with zero JS.
 
-### 3.3 Draft share links (S)
+### 3.3 Draft share links (S) — SHIPPED
 
 **Plan:** generate `data/secret` (32 random bytes) on first need. Dashboard
 draft rows gain "Share": creates
@@ -317,7 +317,7 @@ settings, invalidates all share links).
 **Accept:** link renders the draft logged-out; tampered id/exp/token → 404;
 expired → 404; published posts redirect to the canonical URL.
 
-### 3.4 Post revisions (S)
+### 3.4 Post revisions (S) — SHIPPED
 
 **Plan:** on edit save, if title/content/author changed, push the previous
 values + timestamp onto `post['revisions']`, capped at 10 (shift oldest).

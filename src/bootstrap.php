@@ -225,6 +225,32 @@ function fn_tag_links(\AltoRouter $router, array $post): void
 }
 
 /**
+ * App-level signing secret (draft share links). Created on first use,
+ * outside the web root. Deleting the file rotates the secret, which
+ * invalidates every link ever issued from it.
+ */
+function fn_app_secret(): string
+{
+    $file = FN_DATA_DIR . '/secret';
+    $secret = is_file($file) ? trim((string) file_get_contents($file)) : '';
+    if ($secret === '') {
+        $secret = bin2hex(random_bytes(32));
+        @file_put_contents($file, $secret, LOCK_EX);
+        @chmod($file, 0640);
+    }
+    return $secret;
+}
+
+/**
+ * MAC for a draft share link. The expiry rides in the URL and is covered by
+ * the MAC, so tampering with either id or expiry kills the link.
+ */
+function fn_draft_token(int $id, int $exp): string
+{
+    return substr(hash_hmac('sha256', $id . '|' . $exp, fn_app_secret()), 0, 32);
+}
+
+/**
  * Run the content accessibility lint on a just-saved post and flash any
  * suggestions for the next dashboard render. Suggestions, not gates: the
  * post is already saved when this runs.

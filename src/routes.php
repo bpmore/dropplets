@@ -343,6 +343,30 @@ $router->map('GET', '/robots.txt', function () use ($siteConfig, $router) {
     exit;
 }, 'robots');
 
+// Draft share links: an HMAC-signed, expiring URL lets someone read one
+// draft without logging in. Tampering with the id, the expiry, or the token
+// 404s; published posts redirect to their canonical address.
+$router->map('GET', '/draft/[i:id]/[i:exp]/[:token]', function ($id, $exp, $token) use ($requireConfig, $siteConfig, $blogStore, $imageStore, $router, $notFound) {
+    $requireConfig();
+    $id  = (int) $id;
+    $exp = (int) $exp;
+    if ($exp < time() || !hash_equals(fn_draft_token($id, $exp), (string) $token)) {
+        $notFound();
+    }
+    $post = $blogStore->findById($id);
+    if ($post === null) {
+        $notFound();
+    }
+    if (empty($post['draft'])) {
+        header('Location: ' . fn_post_url($router, $post), true, 301);
+        exit;
+    }
+    header('X-Robots-Tag: noindex, nofollow');
+    $post = fn_with_image($post, $imageStore);
+    $pageTitle = $post['title'];
+    require fn_template_dir($siteConfig['template']) . '/post.php';
+}, 'draftShare');
+
 // Palette overrides as a real stylesheet (no inline <style> on public pages,
 // so the strict CSP holds). Versioned by content hash at link time.
 $router->map('GET', '/palette.css', function () use ($siteConfig) {
@@ -525,6 +549,20 @@ $router->map('GET|POST', '/post/[i:id]/edit', function ($id) use ($requireConfig
             $redirect('editPost', ['id' => $id]);
         }
         $newTitle = fn_clean($_POST['blogPostTitle']);
+
+        // Keep the previous text as a revision (newest last, capped at 10)
+        // whenever this save actually changes something a writer could lose.
+        $newContent = (string) $_POST['blogPostContent'];
+        $newAuthor  = fn_clean($_POST['blogPostAuthor']);
+        if ($newTitle !== ($post['title'] ?? '') || $newContent !== ($post['content'] ?? '') || $newAuthor !== ($post['author'] ?? '')) {
+            $post['revisions'] = array_slice(array_merge((array) ($post['revisions'] ?? []), [[
+                'title'   => (string) ($post['title'] ?? ''),
+                'content' => (string) ($post['content'] ?? ''),
+                'author'  => (string) ($post['author'] ?? ''),
+                'savedAt' => time(),
+            ]]), -10);
+        }
+
         // Re-slug when the title changes (or when a pre-slug post is saved).
         if ($newTitle !== ($post['title'] ?? '') || empty($post['slug'])) {
             $post['slug'] = fn_unique_slug($blogStore, $newTitle, (int) $id);
@@ -558,6 +596,39 @@ $router->map('GET|POST', '/post/[i:id]/edit', function ($id) use ($requireConfig
     $pageTitle = 'Edit Post';
     require FN_INTERNAL_DIR . '/write.php';
 }, 'editPost');
+
+// Restore a revision: the current text is pushed as a revision first, so a
+// restore can itself be undone. Re-slugs when the restored title differs,
+// matching the edit flow.
+$router->map('POST', '/post/[i:id]/restore', function ($id) use ($requireConfig, $requireAuth, $blogStore, $redirect, $notFound) {
+    $requireConfig();
+    $requireAuth();
+    $post = $blogStore->findById((int) $id);
+    if ($post === null) {
+        $notFound();
+    }
+    $revisions = array_values((array) ($post['revisions'] ?? []));
+    $index     = (int) ($_POST['revision'] ?? -1);
+    if (!isset($revisions[$index])) {
+        $notFound();
+    }
+    $restore     = $revisions[$index];
+    $revisions[] = [
+        'title'   => (string) ($post['title'] ?? ''),
+        'content' => (string) ($post['content'] ?? ''),
+        'author'  => (string) ($post['author'] ?? ''),
+        'savedAt' => time(),
+    ];
+    $post['revisions'] = array_slice($revisions, -10);
+    if (($restore['title'] ?? '') !== ($post['title'] ?? '')) {
+        $post['slug'] = fn_unique_slug($blogStore, (string) $restore['title'], (int) $id);
+    }
+    $post['title']   = (string) ($restore['title'] ?? '');
+    $post['author']  = (string) ($restore['author'] ?? '');
+    $post['content'] = (string) ($restore['content'] ?? '');
+    $blogStore->update($post);
+    $redirect('editPost', ['id' => (int) $id]);
+}, 'restoreRevision');
 
 $router->map('GET|POST', '/write', function () use ($requireConfig, $requireAuth, $siteConfig, $blogStore, $imageStore, $images, $router, $redirect) {
     $requireConfig();
@@ -992,6 +1063,15 @@ $router->map('POST', '/admin/themes/apply', function () use ($requireConfig, $re
     }
     $redirect('themes');
 }, 'applyTheme');
+
+// Rotating the app secret invalidates every draft share link ever issued
+// (a fresh secret is generated on next use).
+$router->map('POST', '/settings/rotate-secret', function () use ($requireConfig, $requireAuth, $redirect) {
+    $requireConfig();
+    $requireAuth();
+    @unlink(FN_DATA_DIR . '/secret');
+    $redirect('settings');
+}, 'rotateSecret');
 
 $router->map('POST', '/logout', function () use ($redirect) {
     $_SESSION = [];

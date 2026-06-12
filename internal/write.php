@@ -58,6 +58,24 @@ $uploadLimitMb = rtrim(rtrim(number_format($uploadLimit / 1048576, 1), '0'), '.'
     </fieldset>
     <input class="btn btn-primary mt-2" type="submit" value="<?= $isEdit ? 'Save Edits' : 'Save Post' ?>" />
 </form>
+<?php if ($isEdit && !empty($post['revisions'])): ?>
+    <div class="mt-4">
+        <h2 class="fs-5">Revisions</h2>
+        <ul class="list-group">
+            <?php foreach (array_reverse((array) $post['revisions'], true) as $revIndex => $rev): ?>
+                <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                    <span><?= e(date('M j, Y H:i', (int) ($rev['savedAt'] ?? 0))) ?> &middot; <?= e((string) ($rev['title'] ?? '')) ?></span>
+                    <form method="post" action="<?= e($router->generate('restoreRevision', ['id' => $post['_id']])) ?>"
+                          data-confirm="Restore this revision? The current text is kept as a revision.">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="revision" value="<?= (int) $revIndex ?>">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Restore</button>
+                    </form>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+<?php endif; ?>
 <div class="text-center pt-4">
     <a href="<?= e($router->generate('dashboard')) ?>" class="btn btn-sm btn-secondary">Return To Dashboard</a>
 </div>

@@ -9,7 +9,7 @@ setlocale(LC_ALL, i18n('locale', false));
 // forms (publish/hide/delete), each carrying a CSRF token, so they can no
 // longer be triggered by a forged GET from a malicious page. The delete
 // confirmation runs from admin.js via data-confirm (CSP: no inline handlers).
-$renderActions = function (array $p, bool $isDraft) use ($router) {
+$renderActions = function (array $p, bool $isDraft) use ($router, $siteConfig) {
     $toggleRoute = $isDraft ? 'publish' : 'hide';
     $toggleLabel = $isDraft ? i18n('dashboard_publish', false) : i18n('dashboard_draft', false);
     ob_start(); ?>
@@ -23,6 +23,17 @@ $renderActions = function (array $p, bool $isDraft) use ($router) {
         <?= csrf_field() ?>
         <button type="submit" class="btn btn-sm btn-outline-danger"><?php i18n("dashboard_delete"); ?></button>
     </form>
+    <?php if ($isDraft):
+        $shareExp = time() + 14 * 86400;
+        $shareUrl = rtrim((string) $siteConfig['domain'], '/') . $router->generate('draftShare', [
+            'id' => $p['_id'], 'exp' => $shareExp, 'token' => Fieldnote\fn_draft_token((int) $p['_id'], $shareExp),
+        ]); ?>
+        <details class="d-inline-block align-middle">
+            <summary class="btn btn-sm btn-outline-secondary">Share</summary>
+            <input type="text" readonly class="form-control form-control-sm mt-1"
+                   value="<?= e($shareUrl) ?>" aria-label="Draft share link, valid for 14 days">
+        </details>
+    <?php endif; ?>
     <?php return ob_get_clean();
 };
 
