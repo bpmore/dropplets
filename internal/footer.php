@@ -6,6 +6,6 @@
     <?php if (!empty($needsQr)): ?>
         <script src="<?= e($siteConfig['basePath']) ?>/static/vendor/qrcode.js" defer></script>
     <?php endif; ?>
-    <script src="<?= e($siteConfig['basePath']) ?>/static/admin.js" defer></script>
+    <script src="<?= e($siteConfig['basePath']) ?>/static/admin.js?v=<?= (int) @filemtime(FN_ROOT . '/public/static/admin.js') ?>" defer></script>
 </body>
 </html>

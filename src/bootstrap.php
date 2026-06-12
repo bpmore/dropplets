@@ -421,7 +421,7 @@ function fn_render_head(array $siteConfig, \AltoRouter $router, string $pageTitl
     echo '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">' . "\n";
     echo '<meta name="robots" content="index, follow">' . "\n";
     echo '<title>' . e($fullTitle) . '</title>' . "\n";
-    echo '<link rel="stylesheet" href="' . $base . '/static/a11y.css">' . "\n";
+    echo '<link rel="stylesheet" href="' . $base . '/static/a11y.css?v=' . (int) @filemtime(FN_ROOT . '/public/static/a11y.css') . '">' . "\n";
     echo '<link rel="stylesheet" href="' . e($themeCssHref) . '">' . "\n";
     // Palette overrides authored in /admin/palette — WCAG-validated at save
     // time. A linked stylesheet (not inline) so the strict public CSP holds;

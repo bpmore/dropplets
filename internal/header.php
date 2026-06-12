@@ -21,7 +21,8 @@ $base = e($siteConfig['basePath']);
         <link rel="stylesheet" href="<?= $base ?>/static/vendor/easymde.min.css">
         <link rel="stylesheet" href="<?= $base ?>/static/easymde-icons.css">
     <?php endif; ?>
-    <link rel="stylesheet" href="<?= $base ?>/static/style.css">
+    <?php /* mtime-versioned so admin CSS changes land without a hard refresh */ ?>
+    <link rel="stylesheet" href="<?= $base ?>/static/style.css?v=<?= (int) @filemtime(FN_ROOT . '/public/static/style.css') ?>">
 </head>
 <body>
     <div class="container">
