@@ -20,11 +20,13 @@ use SleekDB\Store;
 error_reporting(E_ALL & ~E_DEPRECATED);
 
 define('FN_ROOT', dirname(__DIR__));
-define('FN_DATA_DIR', FN_ROOT . '/data');
+// Env overrides exist for the smoke test (bin/smoke-test.php), which boots
+// a disposable instance against a temp directory instead of real data.
+define('FN_DATA_DIR', getenv('FN_DATA_DIR') ?: FN_ROOT . '/data');
 define('FN_DB_DIR', FN_DATA_DIR . '/siteDatabase');
 define('FN_TEMPLATES_DIR', FN_ROOT . '/templates');
 define('FN_INTERNAL_DIR', FN_ROOT . '/internal');
-define('FN_UPLOAD_DIR', __DIR__ === '' ? '' : FN_ROOT . '/public/uploads');
+define('FN_UPLOAD_DIR', getenv('FN_UPLOAD_DIR') ?: FN_ROOT . '/public/uploads');
 
 require FN_ROOT . '/vendor/autoload.php';
 
