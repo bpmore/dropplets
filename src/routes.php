@@ -484,7 +484,7 @@ $router->map('GET|POST', '/login', function () use ($configStore, $siteConfig, $
     require FN_INTERNAL_DIR . '/login.php';
 }, 'login');
 
-$router->map('GET|POST', '/login/verify', function () use ($twoFactor, $router, $redirect) {
+$router->map('GET|POST', '/login/verify', function () use ($siteConfig, $twoFactor, $router, $redirect) {
     if (Security::isAuthenticated()) {
         $redirect('dashboard');
     }
