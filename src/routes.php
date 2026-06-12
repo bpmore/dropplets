@@ -34,7 +34,7 @@ $postsPerPage = (int) $siteConfig['postsPerPage'];
 if ($postsPerPage < 1) {
     $postsPerPage = 1;
 }
-$publishedCount = count($blogStore->findBy(['draft', '=', false]));
+$publishedCount = fn_published_count($blogStore);
 $numPages = max(1, (int) ceil($publishedCount / $postsPerPage));
 
 // Site-relative on purpose: records once embedded the configured domain,
@@ -260,6 +260,7 @@ $router->map('POST', '/post/[i:id]/publish', function ($id) use ($requireConfig,
         $update['publishedAt'] = $now;
     }
     $blogStore->updateById((int) $id, $update);
+    fn_invalidate_published_count();
     $redirect('dashboard');
 }, 'publish');
 
@@ -270,6 +271,7 @@ $router->map('POST', '/post/[i:id]/hide', function ($id) use ($requireConfig, $r
         $notFound();
     }
     $blogStore->updateById((int) $id, ['draft' => true]);
+    fn_invalidate_published_count();
     $redirect('dashboard');
 }, 'hide');
 
@@ -283,6 +285,7 @@ $router->map('POST', '/post/[i:id]/delete', function ($id) use ($requireConfig, 
     // Clean up the linked image record and its file on disk.
     fn_delete_image($imageStore, $post['image'] ?? null);
     $blogStore->deleteById((int) $id);
+    fn_invalidate_published_count();
     $redirect('dashboard');
 }, 'deletePost');
 

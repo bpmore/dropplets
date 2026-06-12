@@ -319,6 +319,34 @@ function fn_render_head(array $siteConfig, \AltoRouter $router, string $pageTitl
 }
 
 /**
+ * Number of published posts, cached in a small file so every request stops
+ * loading the entire store just to compute pagination. Deleted by every
+ * action that changes published-ness (publish, hide, delete); regenerated
+ * lazily on the next read.
+ */
+function fn_published_count(Store $blogStore): int
+{
+    $cacheFile = FN_DATA_DIR . '/cache/published-count';
+    if (is_file($cacheFile)) {
+        $cached = trim((string) @file_get_contents($cacheFile));
+        if ($cached !== '' && ctype_digit($cached)) {
+            return (int) $cached;
+        }
+    }
+    $count = count($blogStore->findBy(['draft', '=', false]));
+    $dir = dirname($cacheFile);
+    if (is_dir($dir) || (mkdir($dir, 0750, true) || is_dir($dir))) {
+        @file_put_contents($cacheFile, (string) $count, LOCK_EX);
+    }
+    return $count;
+}
+
+function fn_invalidate_published_count(): void
+{
+    @unlink(FN_DATA_DIR . '/cache/published-count');
+}
+
+/**
  * Render the homepage (page 1) through a given template directory. Shared by
  * the public home route and the admin theme preview so the preview always
  * renders exactly what the theme would show live.
