@@ -16,9 +16,9 @@ require __DIR__ . '/header.php';
         <?php $isCurrent = ($siteConfig['template'] === $tplName); ?>
         <section class="card theme-card" aria-label="Theme <?= e($tplName) ?>">
             <div class="card-body">
-                <h2 class="fs-5 card-title d-flex justify-content-between align-items-center">
+                <h2 class="theme-card-title">
                     <?= e($tplName) ?>
-                    <?php if ($isCurrent): ?><span class="badge text-bg-success">Current theme</span><?php endif; ?>
+                    <?php if ($isCurrent): ?><span class="badge text-bg-success fs-6 align-middle">Current theme</span><?php endif; ?>
                 </h2>
                 <div class="theme-previews">
                     <?php foreach (['light', 'dark'] as $scheme): ?>
@@ -38,7 +38,7 @@ require __DIR__ . '/header.php';
                     <form method="post" action="<?= e($router->generate('applyTheme')) ?>" class="mt-3">
                         <?= csrf_field() ?>
                         <input type="hidden" name="theme" value="<?= e($tplName) ?>">
-                        <button type="submit" class="btn btn-sm btn-primary">Apply <?= e($tplName) ?></button>
+                        <button type="submit" class="btn btn-primary">Apply <?= e($tplName) ?></button>
                     </form>
                 <?php endif; ?>
             </div>

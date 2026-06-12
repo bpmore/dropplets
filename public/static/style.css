@@ -118,36 +118,44 @@ h2 {
     margin: 1rem 0;
 }
 
-/* Theme gallery (internal/themes.php). Each preview is the real homepage
-   rendered at desktop width inside an iframe, miniaturized with a transform.
+/* Theme gallery (internal/themes.php). One full-width card per theme; the
+   light and dark previews split the container and scale fluidly: each iframe
+   renders the real homepage at 200% of its panel's width, transformed down
+   by half, so the miniature always fills whatever space the panel has.
    Lives here because the admin CSP forbids inline styles. */
 .theme-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(700px, 100%), 1fr));
-    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.theme-card-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
 }
 
 .theme-previews {
-    display: flex;
-    gap: .5rem;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+    gap: 1rem;
 }
 
 .theme-frame {
     position: relative;
-    width: 320px;
-    height: 240px;
+    width: 100%;
+    aspect-ratio: 4 / 3;
     overflow: hidden;
     border: 1px solid #dee2e6;
-    border-radius: 4px;
+    border-radius: 8px;
     background: #fff;
 }
 
 .theme-frame iframe {
-    width: 1280px;
-    height: 960px;
+    width: 200%;
+    height: 200%;
     border: 0;
-    transform: scale(.25);
+    transform: scale(.5);
     transform-origin: 0 0;
     /* Previews are pictures, not pages: no stray clicks into the miniature. */
     pointer-events: none;
@@ -155,13 +163,13 @@ h2 {
 
 .theme-frame-label {
     position: absolute;
-    right: .25rem;
-    bottom: .25rem;
-    font-size: .75rem;
-    padding: 0 .4rem;
+    right: .75rem;
+    bottom: .75rem;
+    font-size: 1.15rem;
+    padding: .15rem .75rem;
     background: rgba(0, 0, 0, .65);
     color: #fff;
-    border-radius: 3px;
+    border-radius: 6px;
 }
 
 .write-current-image {
