@@ -142,8 +142,33 @@ a:hover { text-decoration: none; }
     padding: 3.5rem 1.5rem;
 }
 
-/* ===== Pagination ===== */
-.pagination .current { color: var(--accent-contrast); background: var(--accent); }
+/* ===== Pagination: trail-marker chips ===== */
+.pagination { margin-top: 2.5rem; gap: .5rem; }
+
+.pagination a,
+.pagination .current {
+    min-width: 2.3rem;
+    min-height: 2.3rem;
+    padding: .3rem .6rem;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .95rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-decoration: none;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: .3rem;
+    box-shadow: var(--shadow);
+}
+
+.pagination a:hover { color: var(--accent); border-color: var(--accent); }
+
+.pagination .current {
+    color: var(--accent-contrast);
+    background: var(--accent);
+    border-color: var(--accent);
+}
 
 /* ===== Single post ===== */
 .post { max-width: 44rem; margin: 0 auto; }

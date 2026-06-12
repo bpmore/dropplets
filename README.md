@@ -72,29 +72,105 @@ Keeping `data/` outside `public/` means your password hash and post store are ne
 
 ## Themes
 
-Fourteen themes ship in `templates/`; pick one in Settings. All are zero-JS,
-self-hosted, and most adapt automatically to light/dark mode:
+Seventy themes ship in `templates/`; pick one in Settings. Every theme is
+zero-JS, self-hosted, supports light **and** dark mode via
+`prefers-color-scheme`, and meets WCAG 2.2 AA (contrast, skip links, visible
+focus, 24px targets, reduced-motion, 320px reflow) in both schemes —
+mechanically enforced by `php bin/audit-themes.php`. Themes marked
+*dark-identity* are dark by default and bring a light scheme for users who
+prefer one.
+
+**The originals**
 
 | Theme | Personality |
 |---|---|
-| `liquid-new` | Default. Clean card grid, system fonts, dark-mode aware |
+| `liquid-new` | Default. Clean card grid, system fonts |
 | `puddle` | Quiet literary serif, single column, hairline rules |
 | `typewriter` | Warm paper, typewriter headings, dashed dividers |
 | `bink` | Date-gutter rows, orange brand band |
-| `benlk` | Condensed uppercase headlines, dark walnut header, blue links |
-| `terminal` | Phosphor-green console with a blinking cursor (always dark) |
-| `gazette` | Broadsheet: double rules, datelines, ruled columns, drop caps |
-| `noir` | Stark black, giant numbered headlines, one red accent (always dark) |
+| `benlk` | Condensed uppercase headlines, walnut header, blue links |
+| `terminal` | Phosphor-green console, blinking cursor (dark-identity) |
+| `gazette` | Broadsheet: double rules, datelines, drop caps |
+| `noir` | Stark black, giant numbered headlines, one red accent (dark-identity) |
 | `bloom` | Soft pastels, rounded glassy cards |
 | `brutalist` | Hard borders, offset shadows, highlighter yellow |
 | `zen` | Almost nothing: titles, dates, whitespace |
 | `magazine` | Bold editorial hero story + kicker grid |
-| `midnight` | Deep indigo, glass cards, violet-cyan glow (always dark) |
+| `midnight` | Deep indigo, glass cards, violet-cyan glow (dark-identity) |
 | `polaroid` | Snapshots taped to a board, handwritten captions |
+
+**For a niche**
+
+| Theme | Personality |
+|---|---|
+| `aperture` | Photography: full-bleed masonry wall, darkroom black |
+| `gallery` | Art/portfolio: museum plates, small-caps labels |
+| `darkroom` | Film: contact-sheet strips, sprocket holes (dark-identity) |
+| `crumb` | Food: cream-and-cinnamon recipe cards |
+| `pantry` | Homestead: mason-jar labels, gingham band |
+| `bistro` | Café menu: dotted leaders, chalkboard dark mode |
+| `wander` | Travel: tilted postcards, handwritten captions |
+| `atlas` | Geography: topo contours, expedition log |
+| `summit` | Hiking: elevation zigzag, route cards |
+| `harbor` | Nautical: manifest rows, signal flags, brass |
+| `tide` | Coastal: scalloped wave rules, washed-ashore cards |
+| `stack` | Tech/dev: commit-log rows, first-class code blocks |
+| `circuit` | PCB: copper traces, silkscreen labels (dark-identity) |
+| `wire` | News: dense broadsheet ledger, urgent red |
+| `dispatch` | Newsletter: airmail stripes, perforated stamps |
+| `tabloid` | Front page: screaming caps, starburst EXCLUSIVE! |
+| `stride` | Fitness: stat blocks, diagonal stripes |
+| `chord` | Music: gig-poster setlist rows |
+| `ledger` | Business: numbered register, navy restraint |
+| `studio` | Design portfolio: watermark numerals, one carmine |
+| `diary` | Journal: ruled paper, red margin line |
+| `folio` | Literary: TOC leader dots, drop caps |
+| `quill` | Poetry: centered verse, radical whitespace |
+| `scribe` | Academic: numbered abstracts, oxblood |
+| `hearth` | Family: rounded snapshot cards, warm pastels |
+| `meadow` | Wildflower: petal dots, pressed-flower cards |
+| `verdant` | Garden: seed-packet cards, leaf ornaments |
+| `arcade` | Gaming: pixel borders, INSERT COIN footer |
+| `workshop` | Maker: blueprint grid, drawing title blocks |
+| `metro` | Transit: route-line spine, station dots |
+| `archive` | Library: index cards, rubber-stamped dates |
+
+**For a style**
+
+| Theme | Personality |
+|---|---|
+| `mono` | One typeface, three sizes, grayscale + one blue |
+| `grid` | Swiss: strict modular grid, lowercase, signal red |
+| `byline` | Editorial: oversized serif headlines, pull quotes |
+| `letterpress` | Print shop: debossed type, specimen rows |
+| `bauhaus` | Primary circles/squares/triangles, numbered plates |
+| `memphis` | 80s confetti, squiggles, tilted cards |
+| `atomic` | 50s googie: starbursts, boomerang blobs |
+| `deco` | Art deco: gold geometry, framed plates |
+| `rewind` | 70s earth tones, sunburst stripes, tracklist |
+| `vapor` | Vaporwave: sunset bands, cassette rows (dark-identity) |
+| `neon` | Cyberpunk: HUD frames, scanlines, glow (dark-identity) |
+| `frost` | Glassmorphic: blurred panels over gradients |
+| `clay` | Neumorphic: soft extruded surfaces |
+| `riso` | Risograph: two-ink overprint, off-registration |
+| `origami` | Folded paper facets, clipped corners |
+| `mosaic` | Byzantine tiles, grout gaps, gilt |
+| `pop` | Pop-art: halftone dots, comic panels |
+| `parchment` | Manuscript: vellum, illuminated capitals |
+| `gothic` | Cathedral: pointed arches, candle gold (dark-identity) |
+| `saloon` | Western: wanted posters, woodcut slab serif |
+| `prairie` | Craftsman: stained-glass bands, long horizontals |
+| `chalk` | Schoolhouse: chalkboard lessons (dark-identity) |
+| `velvet` | Lounge: jewel tones, gilt-edged panels (dark-identity) |
+| `ember` | Fireside: smoldering rules, rising glow (dark-identity) |
+| `orbit` | Astronomy: star field, mission-log cards (dark-identity) |
 
 `puddle`, `typewriter`, `bink`, and `benlk` are original reinterpretations of
 community themes made for the original Dropplets (by jacksondc, judges119, and
 benlk) — same spirit, all-new code.
+
+See `templates/README.md` for the theme contract (required helpers, the
+8-token palette, contrast rules) if you want to build your own.
 
 ## Building templates
 

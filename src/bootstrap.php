@@ -156,6 +156,8 @@ function dpl_a11y_base_css(): string
 .skip-link{position:absolute;left:-999px;top:auto}
 .skip-link:focus{position:fixed;left:.75rem;top:.75rem;z-index:999;padding:.5rem 1rem;background:var(--bg,#fff);color:var(--text,#000);outline:2px solid var(--focus,currentColor);outline-offset:2px}
 :focus-visible{outline:2px solid var(--focus,currentColor);outline-offset:2px}
+.pagination{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem;list-style:none;margin:2rem 0 0;padding:0}
+.pagination li{margin:0}
 .pagination a,.pagination .current{display:inline-flex;align-items:center;justify-content:center;min-width:24px;min-height:24px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}

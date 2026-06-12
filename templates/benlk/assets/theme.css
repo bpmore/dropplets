@@ -15,6 +15,7 @@
     --accent-contrast: #ffffff;
     --visited: #6d3aa0;
     --band: #34261a;
+    --band-rule: var(--band);
     --band-text: #f3ead9;
     --brand: #e8923a;
     --brand-ink: #9a4a00;
@@ -35,7 +36,8 @@
         --accent: #7ba2ff;
         --accent-contrast: #161412;
         --visited: #c39ae8;
-        --band: #21170e;
+        --band: #342718;
+        --band-rule: #7a5a34;
         --band-text: #f3ead9;
         --brand-ink: #e8923a;
         --line: #6f6a61;
@@ -100,7 +102,7 @@ img { max-width: 100%; height: auto; }
     list-style: none;
     margin: 2.5rem 0 0;
     padding: 1rem 0 0;
-    border-top: 4px solid var(--band);
+    border-top: 4px solid var(--band-rule);
     font-family: var(--mono);
     font-size: .9rem;
 }

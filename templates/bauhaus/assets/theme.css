@@ -1,9 +1,9 @@
 /* Dropplets "bauhaus" theme — 1920s exhibition plates.
  Primary circles, squares, triangles; numbered plates; off-white gallery ground. */
 
-:root { color-scheme: light dark; --bg: #f4f1ea; --surface: #fbf9f4; --text: #191714; --muted: #5a564d; --accent: #1741a6; --accent-contrast: #ffffff; --line: #8a857a; --focus: #1741a6; --red: #c22f21; --blue: #1741a6; --yellow: #f2c317; }
+:root { color-scheme: light dark; --bg: #f4f1ea; --surface: #fbf9f4; --text: #191714; --muted: #5a564d; --accent: #1741a6; --accent-contrast: #ffffff; --line: #8a857a; --focus: #1741a6; --red: #c22f21; --blue: #1741a6; --yellow: #f2c317; --on-yellow: #191714; }
 
-@media (prefers-color-scheme: dark) { :root { --bg: #121214; --surface: #1b1b1e; --text: #f0ede6; --muted: #b1ada3; --accent: #8caaff; --accent-contrast: #0b1538; --line: #6d6d74; --focus: #8caaff; --red: #ff6f61; --blue: #5c7fe6; --yellow: #ffd23f; } }
+@media (prefers-color-scheme: dark) { :root { --bg: #121214; --surface: #1b1b1e; --text: #f0ede6; --muted: #b1ada3; --accent: #8caaff; --accent-contrast: #0b1538; --line: #6d6d74; --focus: #8caaff; --red: #ff6f61; --blue: #5c7fe6; --yellow: #ffd23f; --on-yellow: #1a1a1c; } }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -71,7 +71,7 @@ a:hover { text-decoration: underline; }
 /* ===== Pagination ===== */
 .pagination { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; margin: 2.5rem 0 0; padding: 0; list-style: none; }
 .pagination a, .pagination .current { display: inline-block; min-width: 2.4rem; padding: .35rem .7rem; text-align: center; border: 2px solid var(--text); color: var(--text); }
-.pagination a:hover { background: var(--yellow); color: var(--text); text-decoration: none; }
+.pagination a:hover { background: var(--yellow); color: var(--on-yellow); text-decoration: none; }
 .pagination .current { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 700; }
 
 /* ===== Single post ===== */
@@ -114,4 +114,4 @@ input[type="password"].field { width: 100%; padding: .6rem .9rem; font-size: 1re
 .site-footer { max-width: 46rem; margin: 2rem auto 0; padding: 1.75rem 1.25rem 2.5rem; border-top: 3px solid var(--text); color: var(--muted); font-size: .9rem; letter-spacing: .03em; }
 .site-footer p { margin: .25rem 0; }
 .rss-link { display: inline-block; padding: .4rem .9rem; border: 2px solid var(--text); color: var(--text); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
-.rss-link:hover { background: var(--yellow); text-decoration: none; }
+.rss-link:hover { background: var(--yellow); color: var(--on-yellow); border-color: var(--on-yellow); text-decoration: none; }

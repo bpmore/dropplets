@@ -97,8 +97,8 @@ img { max-width: 100%; height: auto; }
 .empty-state { text-align: center; color: var(--muted); font-family: var(--hand); font-size: 1.4rem; padding: 4rem 0; }
 
 .pagination { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; list-style: none; margin: 3.5rem 0 0; padding: 0; font-family: var(--hand); font-size: 1.2rem; }
-.pagination a, .pagination .current { padding: .15rem .55rem; }
-.pagination .current { color: var(--muted); }
+.pagination a, .pagination .current { display: inline-block; min-width: 2rem; padding: .15rem .5rem; text-align: center; }
+.pagination .current { color: var(--heading); border: 2px solid var(--accent); border-radius: 999px; }
 
 .post { max-width: 44rem; margin: 0 auto; background: var(--frame); color: var(--text); padding: 2.5rem clamp(1.25rem, 5vw, 3rem); box-shadow: var(--shadow); }
 .post-header { text-align: center; margin-bottom: 1.75rem; }

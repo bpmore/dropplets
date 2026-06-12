@@ -13,7 +13,7 @@ gate — it must be green before a theme ships.
 | `header.php`, right after `<body>` | `Dropplets\dpl_skip_link()` | skip-to-content (styled by the shared baseline CSS) |
 | `header.php`, main element | `<main id="main" …>` | skip-link target |
 | `header.php`, in `<head>` | `Dropplets\dpl_render_head(...)` | meta, canonical, OG, and the shared a11y baseline `<style>` |
-| `home.php`, after the post list | `Dropplets\dpl_pagination($router, $page, $numPages)` | aria-current, rel prev/next, 24px targets |
+| `home.php`, after the post list | `Dropplets\dpl_pagination($router, $page, $numPages)` | aria-current, rel prev/next, 24px targets. The baseline CSS gives the `.pagination` list a centered flex layout with bullets removed — style on top of that, don't re-add resets |
 | `post.php`, hero image | `alt="<?= e(Dropplets\dpl_image_alt($post)) ?>"` | the hero is content, not decoration |
 
 Other rules:

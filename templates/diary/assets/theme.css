@@ -196,10 +196,43 @@ a:hover { text-decoration-thickness: 2px; }
 .missing-page { position: relative; padding: .5rem 0; }
 .missing-page p { color: var(--muted); }
 
-/* ---------- Pagination (baseline provides targets; restyle only) ---------- */
-.pagination { margin-top: 2.5rem; }
-.pagination a, .pagination .current { font-style: italic; }
-.pagination .current { color: var(--accent); font-weight: 700; }
+/* ---------- Pagination (baseline provides targets; restyle only) ----------
+   Inked margin-note page numbers: pencil-dotted underlines for links,
+   a hand-drawn ink circle around the current page. */
+.pagination { margin-top: 2.5rem; gap: .5rem; }
+
+.pagination a,
+.pagination .current {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.1rem;
+    min-height: 2.1rem;
+    padding: 0 .35rem;
+    font-style: italic;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+}
+
+.pagination a {
+    color: var(--accent);
+    border-bottom: 2px dotted var(--line);
+}
+
+.pagination a:hover {
+    text-decoration: none;
+    border-bottom-style: solid;
+    border-bottom-color: var(--accent);
+}
+
+.pagination .current {
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    /* slightly lopsided radius reads as a pen-circled number */
+    border-radius: 55% 45% 52% 48% / 48% 56% 44% 52%;
+    transform: rotate(-3deg);
+}
 
 /* ---------- Footer ---------- */
 .notebook-foot {

@@ -137,8 +137,30 @@ a:hover { text-decoration: none; }
 
 .empty-state { text-align: center; color: var(--muted); padding: 4rem 1rem; }
 
-/* ===== Pagination ===== */
-.pagination .current { color: var(--accent-contrast); background: var(--accent); }
+/* ===== Pagination: sea-glass pebbles ===== */
+.pagination { margin-top: 3rem; gap: .55rem; }
+
+.pagination a,
+.pagination .current {
+    min-width: 2.4rem;
+    min-height: 2.4rem;
+    padding: .35rem .55rem;
+    font-size: .95rem;
+    text-decoration: none;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.pagination a:hover { color: var(--accent); border-color: var(--accent); }
+
+.pagination .current {
+    color: var(--accent-contrast);
+    background: var(--accent);
+    border-color: var(--accent);
+}
 
 /* ===== Single post ===== */
 .post { max-width: 40rem; margin: 0 auto; }
