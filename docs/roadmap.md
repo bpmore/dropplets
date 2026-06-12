@@ -61,7 +61,7 @@ Honor `If-None-Match`/`If-Modified-Since` with an empty 304. Send
 **Accept:** second request with `If-None-Match` → 304, no body; publishing a
 post changes the ETag.
 
-### 0.4 Trusted-proxy support for the login throttle (S)
+### 0.4 Trusted-proxy support for the login throttle (S) — SHIPPED
 
 **Problem:** `Security::throttleKey()` hashes `REMOTE_ADDR`. Behind
 Cloudflare or any reverse proxy, every visitor shares one address: five
@@ -77,7 +77,7 @@ the lockout-DoS tradeoff in README's security section.
 **Accept:** with proxy IP trusted, two clients behind it throttle
 independently; with default config, behavior is unchanged.
 
-### 0.5 Strict CSP on public pages when headerInject is empty (M)
+### 0.5 Strict CSP on public pages when headerInject is empty (M) — SHIPPED
 
 **Problem:** public pages send no CSP because `headerInject` may carry
 inline analytics. Most installs leave it empty and get nothing.
@@ -97,7 +97,7 @@ preserving today's behavior.
 identically on a sample of themes (spot-check 5 incl. one dark-identity);
 non-empty headerInject → no CSP; previews still force schemes.
 
-### 0.6 i18n catch-up (S)
+### 0.6 i18n catch-up (S) — deferred: needs a careful human pass on fr/uk translations, not a mechanical one
 
 **Problem:** fr/uk packs predate 2FA, the theme gallery, and newer labels;
 non-English admins get a mixed UI.

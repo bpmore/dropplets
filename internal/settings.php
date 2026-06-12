@@ -63,6 +63,11 @@ $isNew = ($siteConfig['name'] === '');
                 <input class="form-control" type="text" name="blogTimezone" required value="<?= e($siteConfig['timezone']) ?>" />
                 <label><?php i18n("settings_basepath"); ?></label>
                 <input class="form-control" type="text" name="blogBase" value="<?= e($siteConfig['basePath']) ?>" />
+                <label>Trusted proxy IPs/CIDRs (comma-separated)</label>
+                <input class="form-control" type="text" name="blogTrustedProxies"
+                       placeholder="Only if behind Cloudflare or a reverse proxy"
+                       value="<?= e((string) ($siteConfig['trustedProxies'] ?? '')) ?>" />
+                <small class="text-muted">Login rate-limiting keys on the visitor address. Behind a proxy, list the proxy here so the real client IP (from X-Forwarded-For) is used instead — otherwise all visitors share one lockout bucket.</small>
             </fieldset>
             <?php if (Fieldnote\Security::isAuthenticated() && !$isNew): ?>
                 <fieldset class="my-3">

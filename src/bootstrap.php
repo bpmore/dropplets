@@ -38,6 +38,11 @@ $siteConfig  = $configStore->load();
 
 date_default_timezone_set($siteConfig['timezone'] ?: 'America/New_York');
 
+Security::setTrustedProxies(array_values(array_filter(array_map(
+    'trim',
+    explode(',', (string) ($siteConfig['trustedProxies'] ?? ''))
+))));
+
 $dbOptions = ['timeout' => false];
 $blogStore  = new Store('blog', FN_DB_DIR, $dbOptions);
 $imageStore = new Store('images', FN_DB_DIR, $dbOptions);
@@ -202,7 +207,7 @@ function fn_parse_tags(string $input): array
 /**
  * Tag list for a post: an aria-labelled nav of links to tag pages. Themes
  * opt in by calling it (the fn_pagination pattern) — no contract change;
- * layout plumbing for .tag-list lives in fn_a11y_base_css().
+ * layout plumbing for .tag-list lives in static/a11y.css.
  *
  * @param array<string,mixed> $post
  */
@@ -266,31 +271,8 @@ function fn_unique_slug(Store $blogStore, string $title, ?int $excludeId = null)
 }
 
 /**
- * Shared accessibility baseline injected into every theme's <head> ahead of
- * the theme stylesheet (so themes can override at equal specificity).
- * Covers the WCAG 2.2 plumbing no theme should have to re-implement:
- * skip-link reveal, :focus-visible ring, pagination target-size floor,
- * .sr-only, and a global reduced-motion kill switch.
- */
-function fn_a11y_base_css(): string
-{
-    return <<<'CSS'
-.skip-link{position:absolute;left:-999px;top:auto}
-.skip-link:focus{position:fixed;left:.75rem;top:.75rem;z-index:999;padding:.5rem 1rem;background:var(--bg,#fff);color:var(--text,#000);outline:2px solid var(--focus,currentColor);outline-offset:2px}
-:focus-visible{outline:2px solid var(--focus,currentColor);outline-offset:2px}
-.pagination{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem;list-style:none;margin:2rem 0 0;padding:0}
-.pagination li{margin:0}
-.pagination a,.pagination .current{display:inline-flex;align-items:center;justify-content:center;min-width:24px;min-height:24px}
-.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-.tag-list{display:flex;flex-wrap:wrap;gap:.5rem;list-style:none;margin:.5rem 0;padding:0}
-.tag-list a{display:inline-flex;align-items:center;min-height:24px}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
-CSS;
-}
-
-/**
  * Skip-to-content link. Themes call this immediately after <body> and give
- * their main element id="main". Styling lives in fn_a11y_base_css().
+ * their main element id="main". Styling lives in static/a11y.css.
  */
 function fn_skip_link(string $label = 'Skip to content'): void
 {
@@ -313,7 +295,7 @@ function fn_image_alt(array $post): string
 /**
  * Shared pagination block: aria-label, aria-current on the active page,
  * rel prev/next. Themes style it via the .pagination / .current classes;
- * the 24px minimum target size comes from fn_a11y_base_css().
+ * the 24px minimum target size comes from static/a11y.css.
  */
 function fn_pagination(\AltoRouter $router, int $page, int $numPages): void
 {
@@ -413,13 +395,15 @@ function fn_render_head(array $siteConfig, \AltoRouter $router, string $pageTitl
     echo '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">' . "\n";
     echo '<meta name="robots" content="index, follow">' . "\n";
     echo '<title>' . e($fullTitle) . '</title>' . "\n";
-    echo '<style>' . fn_a11y_base_css() . '</style>' . "\n";
+    echo '<link rel="stylesheet" href="' . $base . '/static/a11y.css">' . "\n";
     echo '<link rel="stylesheet" href="' . e($themeCssHref) . '">' . "\n";
     // Palette overrides authored in /admin/palette — WCAG-validated at save
-    // time. Emitted before any preview scheme-force so a forced preview wins.
+    // time. A linked stylesheet (not inline) so the strict public CSP holds;
+    // the version hash busts browser caches the moment the palette changes.
+    // Linked before any preview scheme-force style so a forced preview wins.
     $paletteCss = fn_palette_css($siteConfig);
     if ($paletteCss !== '') {
-        echo '<style>' . $paletteCss . '</style>' . "\n";
+        echo '<link rel="stylesheet" href="' . e($router->generate('paletteCss')) . '?v=' . substr(sha1($paletteCss), 0, 8) . '">' . "\n";
     }
     // Admin theme previews force a color scheme by re-declaring the token
     // block AFTER the stylesheet, where it outranks the theme's own

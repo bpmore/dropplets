@@ -45,6 +45,21 @@ final class Security
     }
 
     /**
+     * Strict CSP for public pages. Possible because public pages carry no
+     * JavaScript and no inline styles (the a11y baseline and palette
+     * overrides are linked stylesheets). Sent only while headerInject is
+     * empty — an injected analytics snippet would be the thing it blocks.
+     */
+    public static function sendPublicCsp(): void
+    {
+        header(
+            "Content-Security-Policy: default-src 'self'; script-src 'none'; "
+            . "style-src 'self'; img-src * data:; font-src 'self'; "
+            . "form-action 'self'; frame-ancestors 'self'; base-uri 'self'"
+        );
+    }
+
+    /**
      * Seconds until the calling IP may attempt another login, or 0 if it may
      * try now. File-based so it works without a database and survives the
      * attacker discarding cookies.
@@ -119,10 +134,80 @@ final class Security
         @chmod($file, 0640);
     }
 
+    /** Trusted proxy CIDRs/IPs, set from config at bootstrap. */
+    private static array $trustedProxies = [];
+
+    /** @param string[] $cidrs */
+    public static function setTrustedProxies(array $cidrs): void
+    {
+        self::$trustedProxies = $cidrs;
+    }
+
     /** Hash the client IP so raw addresses are never stored on disk. */
     private static function throttleKey(): string
     {
-        return hash('sha256', $_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        return hash('sha256', self::clientIp());
+    }
+
+    /**
+     * The address the throttle should key on. Without trusted proxies this
+     * is REMOTE_ADDR, full stop — X-Forwarded-For is attacker-controlled.
+     * When REMOTE_ADDR is a configured proxy, walk X-Forwarded-For from the
+     * right past trusted hops; the first untrusted address is the client.
+     * (Otherwise everyone behind Cloudflare shares one throttle bucket:
+     * five failed logins by anyone lock out the real admin.)
+     */
+    private static function clientIp(): string
+    {
+        $remote = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        if (self::$trustedProxies === [] || !self::ipMatchesAny($remote, self::$trustedProxies)) {
+            return $remote;
+        }
+        $hops = array_reverse(array_map('trim', explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''))));
+        foreach ($hops as $hop) {
+            if ($hop !== '' && filter_var($hop, FILTER_VALIDATE_IP) && !self::ipMatchesAny($hop, self::$trustedProxies)) {
+                return $hop;
+            }
+        }
+        return $remote;
+    }
+
+    /** @param string[] $cidrs */
+    private static function ipMatchesAny(string $ip, array $cidrs): bool
+    {
+        foreach ($cidrs as $cidr) {
+            if (self::ipInCidr($ip, $cidr)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Bare IPs compare exactly; v4 and v6 CIDRs both supported. */
+    private static function ipInCidr(string $ip, string $cidr): bool
+    {
+        if (!str_contains($cidr, '/')) {
+            return $ip === $cidr;
+        }
+        [$subnet, $bits] = explode('/', $cidr, 2);
+        $bits   = (int) $bits;
+        $ipBin  = @inet_pton($ip);
+        $subBin = @inet_pton($subnet);
+        if ($ipBin === false || $subBin === false || strlen($ipBin) !== strlen($subBin)) {
+            return false;
+        }
+        $bytes = intdiv($bits, 8);
+        $rem   = $bits % 8;
+        if ($bytes > 0 && substr($ipBin, 0, $bytes) !== substr($subBin, 0, $bytes)) {
+            return false;
+        }
+        if ($rem > 0) {
+            $mask = (0xFF << (8 - $rem)) & 0xFF;
+            if ((ord($ipBin[$bytes]) & $mask) !== (ord($subBin[$bytes]) & $mask)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

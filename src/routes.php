@@ -343,6 +343,16 @@ $router->map('GET', '/robots.txt', function () use ($siteConfig, $router) {
     exit;
 }, 'robots');
 
+// Palette overrides as a real stylesheet (no inline <style> on public pages,
+// so the strict CSP holds). Versioned by content hash at link time.
+$router->map('GET', '/palette.css', function () use ($siteConfig) {
+    $css = fn_palette_css($siteConfig);
+    fn_conditional_get('palette|' . $css, time() - 60);
+    header('Content-Type: text/css; charset=utf-8');
+    echo $css;
+    exit;
+}, 'paletteCss');
+
 // Public accessibility statement, generated from the same Wcag constants the
 // auditor enforces — the page cannot drift from what the code actually checks.
 $router->map('GET', '/accessibility', function () use ($requireConfig, $siteConfig, $router) {
@@ -636,6 +646,7 @@ $router->map('GET|POST', '/settings', function () use ($configStore, $siteConfig
             // every settings save. (Theme-keyed: inert after a switch.)
             'paletteOverrides' => $siteConfig['paletteOverrides'] ?? [],
             'searchEnabled' => !empty($_POST['blogSearchEnabled']),
+            'trustedProxies' => fn_clean($_POST['blogTrustedProxies'] ?? ''),
             'postsPerPage' => $postsPerPage,
             'basePath'     => fn_clean($_POST['blogBase'] ?? ''),
             'timezone'     => fn_clean($_POST['blogTimezone']),
@@ -1027,6 +1038,14 @@ if (
 
 // Enforce CSRF once, centrally, for every POST before any handler runs.
 Security::requireValidCsrf();
+
+// Public pages get a strict CSP whenever the admin hasn't injected custom
+// head markup (which may legitimately carry inline analytics). Sent before
+// dispatch — admin pages and theme previews replace it with their own
+// policies before producing any output.
+if (empty($siteConfig['headerInject'])) {
+    Security::sendPublicCsp();
+}
 
 $match = $router->match();
 if (is_array($match) && is_callable($match['target'])) {

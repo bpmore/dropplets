@@ -188,6 +188,9 @@ check('legacy id URL 301s to dated slug', $s === 301 && str_contains($h['locatio
 [$s, , $b] = req('GET', $base . parse_url($h['location'] ?? '/', PHP_URL_PATH));
 check('post page renders', $s === 200 && str_contains($b, '<strong>published</strong>'), "status $s");
 
+[, $h] = req('GET', "$base/");
+check('public pages carry strict CSP', str_contains($h['content-security-policy'] ?? '', "script-src 'none'"));
+
 [$s, $h2] = req('GET', "$base/post/2");
 [$s, , $b] = req('GET', $base . parse_url($h2['location'] ?? '/', PHP_URL_PATH));
 check('protected post shows form, not body', $s === 200 && str_contains($b, 'password') && !str_contains($b, 'SENTINEL-PROTECTED-BODY'), "status $s");
@@ -346,14 +349,15 @@ preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
     'body' => http_build_query(['csrf_token' => $m[1], 'tok' => $suggested]),
 ]);
 [$s2, , $b2] = req('GET', "$base/");
-check('suggested palette saves and renders', $s === 302 && str_contains($b2, '@media (prefers-color-scheme: light){:root{--text:'), "status $s");
+[, , $css] = req('GET', "$base/palette.css");
+check('suggested palette saves and renders', $s === 302 && str_contains($b2, 'palette.css?v=') && str_contains($css, '@media (prefers-color-scheme: light){:root{--text:'), "status $s");
 
 // Reset restores stock rendering.
 [, , $b] = req('GET', "$base/admin/palette", $authed);
 preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
 [$s] = req('POST', "$base/admin/palette", $authed + ['body' => 'paletteAction=reset&csrf_token=' . $m[1]]);
 [, , $b2] = req('GET', "$base/");
-check('palette reset clears overrides', $s === 302 && !str_contains($b2, 'prefers-color-scheme: light){:root{--text:'), "status $s");
+check('palette reset clears overrides', $s === 302 && !str_contains($b2, 'palette.css?v='), "status $s");
 
 // ---------------------------------------------------------------- summary --
 
