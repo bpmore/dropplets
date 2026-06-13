@@ -791,6 +791,33 @@ if (!class_exists(ZipArchive::class)) {
     check('medium import creates a draft', $s === 302, "status $s");
     [$s, , $b] = req('GET', "$base/2025/08/my-medium-post", $authed);
     check('medium body + subtitle deck converted and rendered', $s === 200 && str_contains($b, 'A deck') && str_contains($b, '<strong>Medium</strong>'), "status $s");
+
+    // Blogger: Atom export, kind-filtered (posts only), labels as tags.
+    $bgFile = "$tmp/blogger.xml";
+    file_put_contents($bgFile,
+        '<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom">'
+        . '<generator uri="http://www.blogger.com">Blogger</generator><entry>'
+        . '<category scheme="http://schemas.google.com/g/2005#kind" term="http://schemas.google.com/blogger/2008/kind#post"/>'
+        . '<category scheme="http://www.blogger.com/atom/ns#" term="travel"/>'
+        . '<published>2025-09-05T10:00:00.000-07:00</published><title type="text">Blogger Post</title>'
+        . '<content type="html">&lt;p&gt;From &lt;b&gt;Blogger&lt;/b&gt;. &lt;a href="https://e.com"&gt;read more&lt;/a&gt;&lt;/p&gt;</content>'
+        . '<link rel="alternate" type="text/html" href="https://x.blogspot.com/2025/09/blogger-post.html"/>'
+        . '<author><name>Brent</name></author></entry><entry>'
+        . '<category scheme="http://schemas.google.com/g/2005#kind" term="http://schemas.google.com/blogger/2008/kind#comment"/>'
+        . '<title>a comment</title><content type="html">spam</content></entry></feed>');
+    [, , $b] = req('GET', "$base/admin/import", $authed);
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+    [$s, , $b] = req('POST', "$base/admin/import", $authed + ['body' => [
+        'csrf_token'   => $m[1],
+        'importSource' => 'auto',
+        'importZip'    => new CURLFile($bgFile, 'text/xml', 'blogger.xml'),
+    ]]);
+    check('blogger atom auto-detected; dry-run flags a11y, writes nothing, skips comments', $s === 200 && str_contains($b, 'blogger-post') && !str_contains($b, 'a comment') && str_contains($b, 'to fix') && str_contains($b, 'Nothing has been written'), "status $s");
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+    [$s] = req('POST', "$base/admin/import/confirm", $authed + ['body' => 'csrf_token=' . $m[1]]);
+    check('blogger import creates a draft', $s === 302, "status $s");
+    [$s, , $b] = req('GET', "$base/2025/09/blogger-post", $authed);
+    check('blogger body converted and tag mapped', $s === 200 && str_contains($b, '<strong>Blogger</strong>') && str_contains($b, 'travel'), "status $s");
 }
 
 // ---------------------------------------------------------- theme gallery --

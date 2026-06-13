@@ -1428,7 +1428,7 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
         }
 
         if ($importError === '') {
-            $source = in_array($_POST['importSource'] ?? 'auto', ['markdown', 'wordpress', 'rss', 'substack', 'ghost', 'writefreely', 'medium'], true)
+            $source = in_array($_POST['importSource'] ?? 'auto', ['markdown', 'wordpress', 'rss', 'substack', 'ghost', 'writefreely', 'medium', 'blogger'], true)
                 ? (string) $_POST['importSource']
                 : 'auto';
             if ($source === 'auto') {
@@ -1447,6 +1447,8 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
                     $source = 'ghost';
                 } elseif (WriteFreelyImporter::looksLikeWriteFreely($head)) {
                     $source = 'writefreely';
+                } elseif (BloggerImporter::looksLikeBlogger($head)) {
+                    $source = 'blogger';
                 } elseif (RssImporter::looksLikeFeed($head)) {
                     $source = 'rss';
                 } else {
@@ -1462,6 +1464,7 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
                 'ghost'       => $porter->analyzeEntries(GhostImporter::parse($stored)),
                 'writefreely' => $porter->analyzeEntries(WriteFreelyImporter::parse($stored)),
                 'medium'      => $porter->analyzeEntries(MediumImporter::parse($stored)),
+                'blogger'     => $porter->analyzeEntries(BloggerImporter::parse($stored)),
                 default       => $porter->analyze($stored),
             };
             if ($analysis['posts'] === []) {
@@ -1496,6 +1499,7 @@ $router->map('POST', '/admin/import/confirm', function () use ($requireConfig, $
         'ghost'       => $porter->importEntries(GhostImporter::parse($pending['path']), $siteConfig),
         'writefreely' => $porter->importEntries(WriteFreelyImporter::parse($pending['path']), $siteConfig),
         'medium'      => $porter->importEntries(MediumImporter::parse($pending['path']), $siteConfig),
+        'blogger'     => $porter->importEntries(BloggerImporter::parse($pending['path']), $siteConfig),
         default       => $porter->import($pending['path'], $siteConfig),
     };
     @unlink($pending['path']);
