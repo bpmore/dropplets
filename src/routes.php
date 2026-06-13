@@ -1428,7 +1428,7 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
         }
 
         if ($importError === '') {
-            $source = in_array($_POST['importSource'] ?? 'auto', ['markdown', 'wordpress', 'rss', 'substack'], true)
+            $source = in_array($_POST['importSource'] ?? 'auto', ['markdown', 'wordpress', 'rss', 'substack', 'ghost'], true)
                 ? (string) $_POST['importSource']
                 : 'auto';
             if ($source === 'auto') {
@@ -1437,6 +1437,8 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
                     $source = SubstackImporter::looksLikeSubstack($stored) ? 'substack' : 'markdown';
                 } elseif (WordPressImporter::looksLikeWxr($head)) {
                     $source = 'wordpress';
+                } elseif (GhostImporter::looksLikeGhost($head)) {
+                    $source = 'ghost';
                 } elseif (RssImporter::looksLikeFeed($head)) {
                     $source = 'rss';
                 } else {
@@ -1449,6 +1451,7 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
                 'wordpress' => $porter->analyzeEntries(WordPressImporter::parse($stored)),
                 'rss'       => $porter->analyzeEntries(RssImporter::parse($stored)),
                 'substack'  => $porter->analyzeEntries(SubstackImporter::parse($stored)),
+                'ghost'     => $porter->analyzeEntries(GhostImporter::parse($stored)),
                 default     => $porter->analyze($stored),
             };
             if ($analysis['posts'] === []) {
@@ -1480,6 +1483,7 @@ $router->map('POST', '/admin/import/confirm', function () use ($requireConfig, $
         'wordpress' => $porter->importEntries(WordPressImporter::parse($pending['path']), $siteConfig),
         'rss'       => $porter->importEntries(RssImporter::parse($pending['path']), $siteConfig),
         'substack'  => $porter->importEntries(SubstackImporter::parse($pending['path']), $siteConfig),
+        'ghost'     => $porter->importEntries(GhostImporter::parse($pending['path']), $siteConfig),
         default     => $porter->import($pending['path'], $siteConfig),
     };
     @unlink($pending['path']);

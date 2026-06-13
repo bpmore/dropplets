@@ -718,6 +718,33 @@ if (!class_exists(ZipArchive::class)) {
     check('substack import creates drafts', $s === 302, "status $s");
     [$s, , $b] = req('GET', "$base/2025/02/my-first-newsletter", $authed);
     check('substack body and subtitle deck rendered', $s === 200 && str_contains($b, 'A short deck') && str_contains($b, '<strong>Substack</strong>'), "status $s");
+
+    // Ghost: a single JSON export, auto-detected; tags + author joined by id.
+    $ghostJson = "$tmp/ghost.json";
+    file_put_contents($ghostJson, json_encode(['db' => [['meta' => ['exported_on' => 1700000000000, 'version' => '5.0'], 'data' => [
+        'posts' => [
+            ['id' => '1', 'title' => 'Ghost Post', 'slug' => 'ghost-post', 'type' => 'post', 'status' => 'published', 'published_at' => '2025-01-15T08:00:00.000Z',
+             'html' => '<h2>Hi</h2><p>From <strong>Ghost</strong>. See <a href="https://e.com">read more</a>.</p>'],
+            ['id' => '2', 'title' => 'A Page', 'slug' => 'a-page', 'type' => 'page', 'html' => '<p>page</p>'],
+        ],
+        'tags'          => [['id' => 't1', 'name' => 'Tech']],
+        'posts_tags'    => [['post_id' => '1', 'tag_id' => 't1']],
+        'users'         => [['id' => 'u1', 'name' => 'Brent']],
+        'posts_authors' => [['post_id' => '1', 'author_id' => 'u1']],
+    ]]]]));
+    [, , $b] = req('GET', "$base/admin/import", $authed);
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+    [$s, , $b] = req('POST', "$base/admin/import", $authed + ['body' => [
+        'csrf_token'   => $m[1],
+        'importSource' => 'auto',
+        'importZip'    => new CURLFile($ghostJson, 'application/json', 'ghost.json'),
+    ]]);
+    check('ghost json auto-detected; dry-run flags a11y, writes nothing, skips pages', $s === 200 && str_contains($b, 'ghost-post') && !str_contains($b, 'a-page') && str_contains($b, 'to fix') && str_contains($b, 'Nothing has been written'), "status $s");
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+    [$s] = req('POST', "$base/admin/import/confirm", $authed + ['body' => 'csrf_token=' . $m[1]]);
+    check('ghost import creates a draft', $s === 302, "status $s");
+    [$s, , $b] = req('GET', "$base/2025/01/ghost-post", $authed);
+    check('ghost body converted to markdown and rendered', $s === 200 && str_contains($b, 'From') && str_contains($b, '<strong>Ghost</strong>'), "status $s");
 }
 
 // ---------------------------------------------------------- theme gallery --
