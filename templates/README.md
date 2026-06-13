@@ -105,12 +105,14 @@ tokens. Delete links to a server-rendered confirm page (the public surface is
 no-JS), so it's safe without the dashboard's confirm script. Move the call to
 reposition it; keep it gated and don't restyle it into failing contrast.
 
-`Fieldnote\fn_profile_link($router, $siteConfig)` renders a header nav link to
-the profile page (About / Now / …), or nothing when it's disabled (config
-`profilePage`). Every theme calls it in `header.php`; style `.profile-link`.
-
-`Fieldnote\fn_search_form($router, $siteConfig, $value)` renders the visitor
-search box (`role="search"`), or nothing when the owner has disabled search
-(config `searchEnabled`). Every theme calls it inside `header.php` so search is
-reachable from every page and `/search` is never blank; style `.search-form`
-with theme tokens. Move the call to reposition it within the header.
+`Fieldnote\fn_utility_bar($router, $siteConfig)` renders the utility bar — the
+profile-page nav link and the visitor search box — as one strip, or nothing
+when both are disabled. Every theme calls it once **before `<header>`** (right
+after `fn_skip_link()`), so the bar sits above the masthead and doesn't disturb
+each theme's header design. It's themed from `--surface` / `--text` / `--line`
+(all gate-checked), so it adapts to the palette; `.fn-utility` ships in the
+shared a11y CSS. It composes two self-guarding helpers you can also place
+yourself if a theme wants them elsewhere: `Fieldnote\fn_profile_link($router,
+$siteConfig)` (the profile link, config `profilePage`, `.profile-link`) and
+`Fieldnote\fn_search_form($router, $siteConfig, $value)` (the search box,
+`role="search"`, config `searchEnabled`, `.search-form`).

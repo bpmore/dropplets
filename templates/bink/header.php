@@ -11,6 +11,7 @@ $siteName = $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Fieldnote';
 </head>
 <body>
 <?php fn_skip_link(); ?>
+<?php Fieldnote\fn_utility_bar($router, $siteConfig); ?>
 <header class="masthead">
     <div class="masthead-inner">
         <div class="site-title"><a href="<?= e($router->generate('home')) ?>"><?= e($siteName) ?></a></div>
@@ -19,7 +20,5 @@ $siteName = $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Fieldnote';
             <li><a href="<?= e($router->generate('feed')) ?>">RSS feed</a></li>
         </ul>
     </div>
-<?php Fieldnote\fn_profile_link($router, $siteConfig); ?>
-        <?php Fieldnote\fn_search_form($router, $siteConfig, (string) ($_GET["q"] ?? "")); ?>
 </header>
 <main id="main" class="wrap">

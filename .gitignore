@@ -15,3 +15,4 @@
 
 # Generated theme screenshots
 /screenshots/
+.gstack/

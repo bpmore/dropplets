@@ -318,6 +318,27 @@ function fn_search_status(?string $query, int $count): void
 }
 
 /**
+ * Utility bar above the masthead: the profile-page nav link and the visitor
+ * search box, in one consistent strip across every theme. Renders nothing when
+ * both are disabled. Themed entirely from gate-checked CSS custom properties
+ * (.fn-utility uses --surface / --text / --line), so it adapts to each theme's
+ * palette instead of being styled per theme. Sits before <header> so it never
+ * disturbs a theme's masthead design.
+ */
+function fn_utility_bar(\AltoRouter $router, array $siteConfig): void
+{
+    $hasProfile = in_array((string) ($siteConfig['profilePage'] ?? 'off'), Config::PROFILE_SLUGS, true);
+    $hasSearch  = !empty($siteConfig['searchEnabled']);
+    if (!$hasProfile && !$hasSearch) {
+        return;
+    }
+    echo '<nav class="fn-utility" aria-label="Site">' . "\n" . '<div class="fn-utility-inner">' . "\n";
+    fn_profile_link($router, $siteConfig);
+    fn_search_form($router, $siteConfig, (string) ($_GET['q'] ?? ''));
+    echo '</div>' . "\n" . '</nav>' . "\n";
+}
+
+/**
  * Header nav link to the profile page, or nothing when it's disabled (config
  * profilePage = off). The slug doubles as the link label (About / Now / …), so
  * a theme can call this unconditionally in header.php. Styled by .profile-link.

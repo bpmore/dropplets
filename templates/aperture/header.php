@@ -21,12 +21,11 @@ $siteName = $siteConfig['name'] !== '' ? $siteConfig['name'] : 'Fieldnote';
 
 <body>
     <?php fn_skip_link(); ?>
+<?php Fieldnote\fn_utility_bar($router, $siteConfig); ?>
     <header class="topbar">
         <a class="site-title" href="<?= e($router->generate('home')) ?>"><?= e($siteName) ?></a>
         <?php if ($siteConfig['info'] !== ''): ?>
             <span class="site-info"><?= e($siteConfig['info']) ?></span>
         <?php endif; ?>
-<?php Fieldnote\fn_profile_link($router, $siteConfig); ?>
-        <?php Fieldnote\fn_search_form($router, $siteConfig, (string) ($_GET["q"] ?? "")); ?>
     </header>
     <main id="main">
