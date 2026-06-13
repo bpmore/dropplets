@@ -696,6 +696,28 @@ if (!class_exists(ZipArchive::class)) {
         'importUrl'    => "$base/feed",
     ])]);
     check('rss import fetches a feed URL and dedupes existing posts', $s === 200 && str_contains($b, 'skip — exists'), "status $s");
+
+    // Substack: a zip of posts.csv + posts/<id>.<slug>.html, auto-detected.
+    $ssZip = "$tmp/substack.zip";
+    $z = new ZipArchive();
+    $z->open($ssZip, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+    $z->addFromString('posts.csv', "post_id,post_date,is_published,title,subtitle\n101,2025-02-10,true,\"My First, Newsletter\",\"A short deck\"\n102,2025-03-01,true,Second Post,\n");
+    $z->addFromString('posts/101.my-first-newsletter.html', '<h2>Intro</h2><p>Hello from <strong>Substack</strong>.</p>');
+    $z->addFromString('posts/102.second-post.html', '<p>Second body. <a href="https://e.com">read more</a></p>');
+    $z->close();
+    [, , $b] = req('GET', "$base/admin/import", $authed);
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+    [$s, , $b] = req('POST', "$base/admin/import", $authed + ['body' => [
+        'csrf_token'   => $m[1],
+        'importSource' => 'auto',
+        'importZip'    => new CURLFile($ssZip, 'application/zip', 'substack.zip'),
+    ]]);
+    check('substack zip auto-detected; dry-run flags a11y and writes nothing', $s === 200 && str_contains($b, 'my-first-newsletter') && str_contains($b, 'second-post') && str_contains($b, 'to fix') && str_contains($b, 'Nothing has been written'), "status $s");
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+    [$s] = req('POST', "$base/admin/import/confirm", $authed + ['body' => 'csrf_token=' . $m[1]]);
+    check('substack import creates drafts', $s === 302, "status $s");
+    [$s, , $b] = req('GET', "$base/2025/02/my-first-newsletter", $authed);
+    check('substack body and subtitle deck rendered', $s === 200 && str_contains($b, 'A short deck') && str_contains($b, '<strong>Substack</strong>'), "status $s");
 }
 
 // ---------------------------------------------------------- theme gallery --

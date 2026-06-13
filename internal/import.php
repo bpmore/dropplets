@@ -23,6 +23,7 @@ require __DIR__ . '/header.php';
             <option value="auto">Auto-detect</option>
             <option value="markdown">Markdown / Fieldnote export (.zip of .md with frontmatter)</option>
             <option value="wordpress">WordPress (.xml export — also Squarespace)</option>
+            <option value="substack">Substack (.zip export)</option>
             <option value="rss">RSS / Atom feed (file or URL below)</option>
         </select>
         <input type="file" name="importZip" accept=".zip,.xml,application/xml,text/xml,application/rss+xml,application/atom+xml" class="form-control">

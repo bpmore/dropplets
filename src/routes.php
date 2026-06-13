@@ -1428,13 +1428,13 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
         }
 
         if ($importError === '') {
-            $source = in_array($_POST['importSource'] ?? 'auto', ['markdown', 'wordpress', 'rss'], true)
+            $source = in_array($_POST['importSource'] ?? 'auto', ['markdown', 'wordpress', 'rss', 'substack'], true)
                 ? (string) $_POST['importSource']
                 : 'auto';
             if ($source === 'auto') {
                 $head = (string) file_get_contents($stored, false, null, 0, 4096);
                 if (str_starts_with($head, "PK\x03\x04")) {
-                    $source = 'markdown';
+                    $source = SubstackImporter::looksLikeSubstack($stored) ? 'substack' : 'markdown';
                 } elseif (WordPressImporter::looksLikeWxr($head)) {
                     $source = 'wordpress';
                 } elseif (RssImporter::looksLikeFeed($head)) {
@@ -1448,6 +1448,7 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
             $analysis = match ($source) {
                 'wordpress' => $porter->analyzeEntries(WordPressImporter::parse($stored)),
                 'rss'       => $porter->analyzeEntries(RssImporter::parse($stored)),
+                'substack'  => $porter->analyzeEntries(SubstackImporter::parse($stored)),
                 default     => $porter->analyze($stored),
             };
             if ($analysis['posts'] === []) {
@@ -1478,6 +1479,7 @@ $router->map('POST', '/admin/import/confirm', function () use ($requireConfig, $
     $_SESSION['import_result'] = match ($pending['source'] ?? 'markdown') {
         'wordpress' => $porter->importEntries(WordPressImporter::parse($pending['path']), $siteConfig),
         'rss'       => $porter->importEntries(RssImporter::parse($pending['path']), $siteConfig),
+        'substack'  => $porter->importEntries(SubstackImporter::parse($pending['path']), $siteConfig),
         default     => $porter->import($pending['path'], $siteConfig),
     };
     @unlink($pending['path']);
