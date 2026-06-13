@@ -1428,9 +1428,13 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
         }
 
         if ($importError === '') {
-            $source = in_array($_POST['importSource'] ?? 'auto', ['markdown', 'wordpress', 'rss', 'substack', 'ghost', 'writefreely', 'medium', 'blogger', 'notion', 'devto', 'hashnode'], true)
+            $source = in_array($_POST['importSource'] ?? 'auto', ['markdown', 'wordpress', 'squarespace', 'rss', 'substack', 'ghost', 'writefreely', 'medium', 'blogger', 'notion', 'devto', 'hashnode'], true)
                 ? (string) $_POST['importSource']
                 : 'auto';
+            // Squarespace exports in WordPress's WXR format — same converter.
+            if ($source === 'squarespace') {
+                $source = 'wordpress';
+            }
             if ($source === 'auto') {
                 $head = (string) file_get_contents($stored, false, null, 0, 4096);
                 if (str_starts_with($head, "PK\x03\x04")) {

@@ -22,7 +22,8 @@ require __DIR__ . '/header.php';
         <select class="form-select mb-2" name="importSource" id="importSource">
             <option value="auto">Auto-detect</option>
             <option value="markdown">Markdown / Fieldnote export (.zip of .md with frontmatter)</option>
-            <option value="wordpress">WordPress (.xml export — also Squarespace)</option>
+            <option value="wordpress">WordPress (.xml export)</option>
+            <option value="squarespace">Squarespace (.xml export, WordPress format)</option>
             <option value="substack">Substack (.zip export)</option>
             <option value="medium">Medium (.zip export)</option>
             <option value="notion">Notion (Markdown .zip export)</option>

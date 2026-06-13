@@ -882,6 +882,26 @@ if (!class_exists(ZipArchive::class)) {
     check('hashnode import creates a draft', $s === 302, "status $s");
     [$s, , $b] = req('GET', "$base/2025/11/hashnode-post", $authed);
     check('hashnode body + brief deck rendered, tags mapped', $s === 200 && str_contains($b, 'A short brief') && str_contains($b, '<strong>Hashnode</strong>') && str_contains($b, '/tag/tech'), "status $s");
+
+    // Squarespace exports WordPress WXR — the "squarespace" pick routes there.
+    $sqFile = "$tmp/squarespace.xml";
+    file_put_contents($sqFile,
+        '<?xml version="1.0"?><rss version="2.0"'
+        . ' xmlns:content="http://purl.org/rss/1.0/modules/content/"'
+        . ' xmlns:wp="http://wordpress.org/export/1.2/"'
+        . ' xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><item>'
+        . '<title>Square Post</title><content:encoded><![CDATA[<p>From <strong>Squarespace</strong>.</p>]]></content:encoded>'
+        . '<wp:post_name>sq-imported</wp:post_name><wp:post_type>post</wp:post_type>'
+        . '<wp:status>publish</wp:status><wp:post_date_gmt>2025-12-01 10:00:00</wp:post_date_gmt>'
+        . '</item></channel></rss>');
+    [, , $b] = req('GET', "$base/admin/import", $authed);
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+    [$s, , $b] = req('POST', "$base/admin/import", $authed + ['body' => [
+        'csrf_token'   => $m[1],
+        'importSource' => 'squarespace',
+        'importZip'    => new CURLFile($sqFile, 'text/xml', 'squarespace.xml'),
+    ]]);
+    check('squarespace pick routes through the WordPress WXR converter', $s === 200 && str_contains($b, 'sq-imported') && str_contains($b, 'Nothing has been written'), "status $s");
 }
 
 // ---------------------------------------------------------- theme gallery --
