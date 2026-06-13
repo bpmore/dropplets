@@ -818,6 +818,27 @@ if (!class_exists(ZipArchive::class)) {
     check('blogger import creates a draft', $s === 302, "status $s");
     [$s, , $b] = req('GET', "$base/2025/09/blogger-post", $authed);
     check('blogger body converted and tag mapped', $s === 200 && str_contains($b, '<strong>Blogger</strong>') && str_contains($b, 'travel'), "status $s");
+
+    // Notion: Markdown zip; title line stripped, property block -> tags/date.
+    $ntZip = "$tmp/notion.zip";
+    $z = new ZipArchive();
+    $z->open($ntZip, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+    $z->addFromString('Export-abc/My Notion Post 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d.md',
+        "# My Notion Post\n\nTags: Tech, Life\nPublished: January 5, 2025\n\nFrom **Notion**. See [read more](https://e.com).\n");
+    $z->close();
+    [, , $b] = req('GET', "$base/admin/import", $authed);
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+    [$s, , $b] = req('POST', "$base/admin/import", $authed + ['body' => [
+        'csrf_token'   => $m[1],
+        'importSource' => 'auto',
+        'importZip'    => new CURLFile($ntZip, 'application/zip', 'notion.zip'),
+    ]]);
+    check('notion zip auto-detected; dry-run flags a11y, writes nothing', $s === 200 && str_contains($b, 'my-notion-post') && str_contains($b, 'to fix') && str_contains($b, 'Nothing has been written'), "status $s");
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+    [$s] = req('POST', "$base/admin/import/confirm", $authed + ['body' => 'csrf_token=' . $m[1]]);
+    check('notion import creates a draft', $s === 302, "status $s");
+    [$s, , $b] = req('GET', "$base/2025/01/my-notion-post", $authed);
+    check('notion body rendered + property tags lifted', $s === 200 && str_contains($b, '<strong>Notion</strong>') && str_contains($b, '/tag/tech'), "status $s");
 }
 
 // ---------------------------------------------------------- theme gallery --

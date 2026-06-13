@@ -25,6 +25,7 @@ require __DIR__ . '/header.php';
             <option value="wordpress">WordPress (.xml export — also Squarespace)</option>
             <option value="substack">Substack (.zip export)</option>
             <option value="medium">Medium (.zip export)</option>
+            <option value="notion">Notion (Markdown .zip export)</option>
             <option value="ghost">Ghost (.json export)</option>
             <option value="writefreely">WriteFreely / Write.as (.json export)</option>
             <option value="blogger">Blogger / Blogspot (.xml export)</option>

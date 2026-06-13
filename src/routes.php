@@ -1428,7 +1428,7 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
         }
 
         if ($importError === '') {
-            $source = in_array($_POST['importSource'] ?? 'auto', ['markdown', 'wordpress', 'rss', 'substack', 'ghost', 'writefreely', 'medium', 'blogger'], true)
+            $source = in_array($_POST['importSource'] ?? 'auto', ['markdown', 'wordpress', 'rss', 'substack', 'ghost', 'writefreely', 'medium', 'blogger', 'notion'], true)
                 ? (string) $_POST['importSource']
                 : 'auto';
             if ($source === 'auto') {
@@ -1438,6 +1438,8 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
                         $source = 'substack';
                     } elseif (MediumImporter::looksLikeMedium($stored)) {
                         $source = 'medium';
+                    } elseif (NotionImporter::looksLikeNotion($stored)) {
+                        $source = 'notion';
                     } else {
                         $source = 'markdown';
                     }
@@ -1465,6 +1467,7 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
                 'writefreely' => $porter->analyzeEntries(WriteFreelyImporter::parse($stored)),
                 'medium'      => $porter->analyzeEntries(MediumImporter::parse($stored)),
                 'blogger'     => $porter->analyzeEntries(BloggerImporter::parse($stored)),
+                'notion'      => $porter->analyzeEntries(NotionImporter::parse($stored)),
                 default       => $porter->analyze($stored),
             };
             if ($analysis['posts'] === []) {
@@ -1500,6 +1503,7 @@ $router->map('POST', '/admin/import/confirm', function () use ($requireConfig, $
         'writefreely' => $porter->importEntries(WriteFreelyImporter::parse($pending['path']), $siteConfig),
         'medium'      => $porter->importEntries(MediumImporter::parse($pending['path']), $siteConfig),
         'blogger'     => $porter->importEntries(BloggerImporter::parse($pending['path']), $siteConfig),
+        'notion'      => $porter->importEntries(NotionImporter::parse($pending['path']), $siteConfig),
         default       => $porter->import($pending['path'], $siteConfig),
     };
     @unlink($pending['path']);
