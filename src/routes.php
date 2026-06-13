@@ -514,6 +514,14 @@ $router->map('POST', '/post/[i:id]/publish', function ($id) use ($requireConfig,
     if ($post === null) {
         $notFound();
     }
+    // Inaccessible content must not go public. All lint rules block at this
+    // boundary; the writer is returned to the editor with the specific fixes
+    // and the post stays a draft.
+    $lintErrors = ContentLint::check((string) ($post['content'] ?? ''));
+    if ($lintErrors !== []) {
+        $_SESSION['content_lint_block'] = $lintErrors;
+        $redirect('editPost', ['id' => (int) $id]);
+    }
     $update = ['draft' => false, 'scheduledFor' => 0]; // manual publish supersedes a schedule
     // First publish stamps the post's date (which the permalink embeds).
     // Hiding and re-publishing later must not move it, so remember it.
@@ -580,6 +588,26 @@ $router->map('GET|POST', '/post/[i:id]/edit', function ($id) use ($requireConfig
         // whenever this save actually changes something a writer could lose.
         $newContent = (string) $_POST['blogPostContent'];
         $newAuthor  = fn_clean($_POST['blogPostAuthor']);
+
+        // Editing a post that is already public must not push an inaccessible
+        // version live. Drafts stay free to save (advisory warnings only) — the
+        // gate is the public boundary, the same model as the theme/palette
+        // enforcement. Re-render the editor with the submitted text intact and
+        // the specific fixes; nothing is persisted, so the live post is
+        // untouched and no image churn happens.
+        if (empty($post['draft'])) {
+            $lintErrors = ContentLint::check($newContent);
+            if ($lintErrors !== []) {
+                $post['title']   = $newTitle;
+                $post['author']  = $newAuthor;
+                $post['content'] = $newContent;
+                $post['tags']    = fn_parse_tags((string) ($_POST['blogPostTags'] ?? ''));
+                $pageTitle = 'Edit Post';
+                require FN_INTERNAL_DIR . '/write.php';
+                return;
+            }
+        }
+
         if ($newTitle !== ($post['title'] ?? '') || $newContent !== ($post['content'] ?? '') || $newAuthor !== ($post['author'] ?? '')) {
             $post['revisions'] = array_slice(array_merge((array) ($post['revisions'] ?? []), [[
                 'title'   => (string) ($post['title'] ?? ''),

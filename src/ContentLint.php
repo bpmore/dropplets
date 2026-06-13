@@ -5,13 +5,17 @@ namespace Fieldnote;
 /**
  * Accessibility lint for post content. Themes are machine-enforced by the
  * auditor; this is the same idea applied to the writing. Checks the rendered
- * HTML (Parsedown safe mode, same as the live site) and returns suggestions.
- * Suggestions never block publishing — the writer stays in charge.
+ * HTML (Parsedown safe mode, same as the live site) and returns issues.
+ *
+ * While a post is a draft the issues are advisory — flashed after a save, the
+ * writer stays in charge. At the public boundary they are enforced: publishing
+ * a post, or saving edits to an already-public one, is refused while any issue
+ * remains (see the publish and edit routes). Drafting is never blocked.
  */
 final class ContentLint
 {
     /** Link texts that say nothing about the destination. */
-    private const VAGUE_LINKS = ['click here', 'here', 'click', 'read more', 'more', 'link', 'this', 'this page'];
+    private const VAGUE_LINKS = ['click here', 'here', 'click', 'read more', 'learn more', 'find out more', 'see more', 'more', 'link', 'this', 'this page', 'continue', 'continue reading'];
 
     /** @return string[] human-readable suggestions, empty when clean */
     public static function check(string $markdown): array

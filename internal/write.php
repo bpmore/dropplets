@@ -14,8 +14,23 @@ $uploadLimit   = fn_effective_upload_limit();
 $uploadLimitMb = rtrim(rtrim(number_format($uploadLimit / 1048576, 1), '0'), '.');
 // Per-post passwords are now hashed and never sent back to the browser. The
 // field is shown blank; leaving it blank on edit keeps the existing password.
+//
+// Blocking accessibility errors: passed directly by the edit handler when a
+// save to a public post is refused, or stashed by the publish route before it
+// redirects here. Distinct from the dashboard's advisory flash — these
+// actually stopped a save or publish.
+$lintErrors = $lintErrors ?? ($_SESSION['content_lint_block'] ?? null);
+unset($_SESSION['content_lint_block']);
 ?>
 <h1 class="setupH1 setup text-center"><?php i18n("write_title"); ?></h1>
+<?php if (!empty($lintErrors)): ?>
+    <div class="alert alert-danger" role="alert">
+        <p class="mb-1"><strong>Not saved.</strong> Fix these accessibility issues, then save again:</p>
+        <ul class="mb-0">
+            <?php foreach ($lintErrors as $err): ?><li><?= e($err) ?></li><?php endforeach; ?>
+        </ul>
+    </div>
+<?php endif; ?>
 <form method="post" enctype="multipart/form-data" action="<?= e($action) ?>">
     <?= csrf_field() ?>
     <fieldset>

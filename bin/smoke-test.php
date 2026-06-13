@@ -358,12 +358,51 @@ preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
     'csrf_token'      => $m[1],
     'blogPostTitle'   => 'Lint Me',
     'blogPostAuthor'  => 'Tester',
-    'blogPostContent' => "Intro.\n\n#### Skipped levels\n\nSee [click here](https://example.com).",
+    'blogPostContent' => "Intro.\n\n#### Skipped levels\n\nSee [click here](https://example.com) or [learn more](https://example.com).",
 ])]);
 [, , $b] = req('GET', "$base/dashboard", $authed);
 check('content lint flashes suggestions after save', $s === 302 && str_contains($b, 'Accessibility suggestions') && str_contains($b, 'click here'), "status $s");
+check('lint flags "learn more" like other vague link text', str_contains($b, 'learn more'));
 [, , $b] = req('GET', "$base/dashboard", $authed);
 check('lint flash shows exactly once', !str_contains($b, 'Accessibility suggestions'));
+
+// ------------------------------------------------- accessibility gate --------
+// Drafts save freely (the 'Lint Me' draft above kept its skipped heading); the
+// gate fires at the public boundary — publishing, and editing a live post.
+
+// Editing a published post with a failing body is refused: the editor comes
+// back with the specific fix and nothing is persisted.
+[, , $b] = req('GET', "$base/post/1/edit", $authed);
+preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+[$s, , $b] = req('POST', "$base/post/1/edit", $authed + ['body' => http_build_query([
+    'csrf_token'      => $m[1],
+    'blogPostTitle'   => 'Hello World',
+    'blogPostAuthor'  => 'Tester',
+    'blogPostContent' => "## Section\n\n#### Skips a level",
+])]);
+check('editing a live post is blocked when it fails the a11y check', $s === 200 && str_contains($b, 'accessibility issues') && str_contains($b, 'Heading levels jump'), "status $s");
+[, , $b] = req('GET', "$base/post/1/edit", $authed);
+check('the blocked edit did not persist', str_contains($b, 'A **published** fixture post.'));
+
+// A clean edit to a live post still saves (no-op content, stays published).
+preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+[$s] = req('POST', "$base/post/1/edit", $authed + ['body' => http_build_query([
+    'csrf_token'      => $m[1],
+    'blogPostTitle'   => 'Hello World',
+    'blogPostAuthor'  => 'Tester',
+    'blogPostContent' => 'A **published** fixture post.',
+    'blogPostTags'    => 'notes, testing',
+])]);
+check('a clean edit to a live post still saves', $s === 302, "status $s");
+
+// Publishing the failing 'Lint Me' draft is refused and routed to the editor;
+// the post stays a draft (still hidden from the public homepage).
+[, , $b] = req('GET', "$base/dashboard", $authed);
+preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+[$s, $h] = req('POST', "$base/post/5/publish", $authed + ['body' => 'csrf_token=' . $m[1]]);
+check('publishing a failing draft is blocked and sent to the editor', $s === 302 && str_contains($h['location'] ?? '', '/edit'), "status $s -> " . ($h['location'] ?? ''));
+[, , $b] = req('GET', "$base/");
+check('the blocked publish kept the post a draft', !str_contains($b, 'Lint Me'));
 
 // --------------------------------------------------------------- passkeys --
 
