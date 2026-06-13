@@ -29,6 +29,7 @@ require __DIR__ . '/header.php';
             <option value="ghost">Ghost (.json export)</option>
             <option value="writefreely">WriteFreely / Write.as (.json export)</option>
             <option value="devto">DEV / dev.to (.json export)</option>
+            <option value="hashnode">Hashnode (.json export)</option>
             <option value="blogger">Blogger / Blogspot (.xml export)</option>
             <option value="rss">RSS / Atom feed (file or URL below)</option>
         </select>

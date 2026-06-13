@@ -860,6 +860,28 @@ if (!class_exists(ZipArchive::class)) {
     check('devto import creates a draft', $s === 302, "status $s");
     [$s, , $b] = req('GET', "$base/2025/10/dev-post-abc", $authed);
     check('devto markdown body rendered + tag_list mapped', $s === 200 && str_contains($b, '<strong>dev.to</strong>') && str_contains($b, '/tag/webdev'), "status $s");
+
+    // Hashnode: markdown-native JSON, tag objects -> tags, brief deck.
+    $hnJson = "$tmp/hashnode.json";
+    file_put_contents($hnJson, json_encode([
+        ['title' => 'Hashnode Post', 'slug' => 'hashnode-post', 'brief' => 'A short brief',
+         'tags' => [['name' => 'Tech', 'slug' => 'tech'], ['name' => 'Web', 'slug' => 'web']],
+         'publishedAt' => '2025-11-01T00:00:00Z', 'author' => ['name' => 'Brent'],
+         'contentMarkdown' => "## Hi\n\nFrom **Hashnode**. See [read more](https://e.com)."],
+    ]));
+    [, , $b] = req('GET', "$base/admin/import", $authed);
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+    [$s, , $b] = req('POST', "$base/admin/import", $authed + ['body' => [
+        'csrf_token'   => $m[1],
+        'importSource' => 'auto',
+        'importZip'    => new CURLFile($hnJson, 'application/json', 'hashnode.json'),
+    ]]);
+    check('hashnode json auto-detected; dry-run flags a11y, writes nothing', $s === 200 && str_contains($b, 'hashnode-post') && str_contains($b, 'to fix') && str_contains($b, 'Nothing has been written'), "status $s");
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+    [$s] = req('POST', "$base/admin/import/confirm", $authed + ['body' => 'csrf_token=' . $m[1]]);
+    check('hashnode import creates a draft', $s === 302, "status $s");
+    [$s, , $b] = req('GET', "$base/2025/11/hashnode-post", $authed);
+    check('hashnode body + brief deck rendered, tags mapped', $s === 200 && str_contains($b, 'A short brief') && str_contains($b, '<strong>Hashnode</strong>') && str_contains($b, '/tag/tech'), "status $s");
 }
 
 // ---------------------------------------------------------- theme gallery --

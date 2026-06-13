@@ -165,13 +165,14 @@ draft vs published, that's recorded in the report — but everything still
 | 0 | Converter layer + `Porter` in-memory entry point + import-as-draft + a11y report + image localization via SafeHttp + format-pick UI | M — **SHIPPED** |
 | 1 | **WordPress (WXR)** — **SHIPPED** (`WordPressImporter`; covers Squarespace). **Generic RSS/Atom** — **SHIPPED** (`RssImporter`; file or SafeHttp-fetched URL) | M |
 | 2 | **Substack** — **SHIPPED** (`SubstackImporter`). **Ghost** — **SHIPPED** (`GhostImporter`). **WriteFreely** — **SHIPPED** (`WriteFreelyImporter`; markdown-native JSON, #hashtags → tags) | M — **DONE** |
-| 3 | **Medium** — **SHIPPED**. **Blogger** — **SHIPPED**. **Notion** — **SHIPPED**. **Dev.to** — **SHIPPED** (`DevtoImporter`; markdown-native JSON). Hashnode reuses the markdown/Dev.to shape. | M — **DONE** |
+| 3 | **Medium** — **SHIPPED**. **Blogger** — **SHIPPED**. **Notion** — **SHIPPED**. **Dev.to** — **SHIPPED**. **Hashnode** — **SHIPPED** (`HashnodeImporter`; markdown-native JSON). | M — **DONE** |
 
-All listed platforms shipped. Eight converters
+All listed platforms shipped. Nine converters
 (`WordPressImporter`, `RssImporter`, `SubstackImporter`, `GhostImporter`,
 `WriteFreelyImporter`, `MediumImporter`, `BloggerImporter`, `NotionImporter`,
-`DevtoImporter`) plus the original frontmatter-markdown importer, all
-auto-detected and routed through `Porter::analyzeEntries` / `importEntries`.
+`DevtoImporter`, `HashnodeImporter`) plus the original frontmatter-markdown
+importer, all auto-detected and routed through `Porter::analyzeEntries` /
+`importEntries`.
 
 Phase 0 + WordPress shipped: `Porter::analyzeEntries()` / `importEntries()` run
 the shared pipeline (HTML→Markdown via `league/html-to-markdown`, inline +

@@ -1428,7 +1428,7 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
         }
 
         if ($importError === '') {
-            $source = in_array($_POST['importSource'] ?? 'auto', ['markdown', 'wordpress', 'rss', 'substack', 'ghost', 'writefreely', 'medium', 'blogger', 'notion', 'devto'], true)
+            $source = in_array($_POST['importSource'] ?? 'auto', ['markdown', 'wordpress', 'rss', 'substack', 'ghost', 'writefreely', 'medium', 'blogger', 'notion', 'devto', 'hashnode'], true)
                 ? (string) $_POST['importSource']
                 : 'auto';
             if ($source === 'auto') {
@@ -1449,6 +1449,8 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
                     $source = 'ghost';
                 } elseif (DevtoImporter::looksLikeDevto($head)) {
                     $source = 'devto';
+                } elseif (HashnodeImporter::looksLikeHashnode($head)) {
+                    $source = 'hashnode';
                 } elseif (WriteFreelyImporter::looksLikeWriteFreely($head)) {
                     $source = 'writefreely';
                 } elseif (BloggerImporter::looksLikeBlogger($head)) {
@@ -1471,6 +1473,7 @@ $router->map('GET|POST', '/admin/import', function () use ($requireConfig, $requ
                 'blogger'     => $porter->analyzeEntries(BloggerImporter::parse($stored)),
                 'notion'      => $porter->analyzeEntries(NotionImporter::parse($stored)),
                 'devto'       => $porter->analyzeEntries(DevtoImporter::parse($stored)),
+                'hashnode'    => $porter->analyzeEntries(HashnodeImporter::parse($stored)),
                 default       => $porter->analyze($stored),
             };
             if ($analysis['posts'] === []) {
@@ -1508,6 +1511,7 @@ $router->map('POST', '/admin/import/confirm', function () use ($requireConfig, $
         'blogger'     => $porter->importEntries(BloggerImporter::parse($pending['path']), $siteConfig),
         'notion'      => $porter->importEntries(NotionImporter::parse($pending['path']), $siteConfig),
         'devto'       => $porter->importEntries(DevtoImporter::parse($pending['path']), $siteConfig),
+        'hashnode'    => $porter->importEntries(HashnodeImporter::parse($pending['path']), $siteConfig),
         default       => $porter->import($pending['path'], $siteConfig),
     };
     @unlink($pending['path']);
