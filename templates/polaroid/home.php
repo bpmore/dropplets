@@ -3,6 +3,7 @@ use function Fieldnote\e;
 use function Fieldnote\fn_post_url;
 use function Fieldnote\fn_pagination;
 require __DIR__ . '/header.php';
+Fieldnote\fn_search_status($searchQuery ?? null, count($allPosts ?? []));
 $dateFormat = i18n('dateformat', false);
 ?>
 <h1 class="sr-only"><?= e($siteName) ?></h1>

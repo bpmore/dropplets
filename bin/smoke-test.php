@@ -276,6 +276,12 @@ check('search never reads protected bodies', !str_contains($b, 'Locked Post'));
 check('search matches protected titles', str_contains($b, 'Locked Post'));
 [, , $b] = req('GET', "$base/search?q=x");
 check('single-char query returns nothing', !str_contains($b, 'Hello World'));
+[, , $b] = req('GET', "$base/search?q=Hello");
+check('search shows a result count', str_contains($b, 'class="search-status"') && str_contains($b, 'result') && str_contains($b, 'Hello'));
+[, , $b] = req('GET', "$base/search?q=zzznomatchzzz");
+check('search shows a no-results message', str_contains($b, 'class="search-status"') && str_contains($b, 'No results for') && str_contains($b, 'zzznomatchzzz'));
+[, , $b] = req('GET', "$base/");
+check('search status never appears off the search page', !str_contains($b, 'search-status'));
 
 // The search box is surfaced in the header on every page when enabled, so
 // /search is never a blank page and search is reachable from the home page.

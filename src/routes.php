@@ -479,6 +479,9 @@ $router->map('GET', '/search', function () use ($requireConfig, $siteConfig, $bl
     $page      = 1;
     $numPages  = 1;
     $limit     = count($allPosts);
+    // Drives fn_search_status() in the theme's home.php — set only here, so the
+    // status line never appears on the homepage or tag pages.
+    $searchQuery = $q !== '' ? $q : null;
     $pageTitle = $q === '' ? 'Search' : 'Search: ' . $q;
     require fn_template_dir($siteConfig['template']) . '/home.php';
 }, 'search');

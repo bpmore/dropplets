@@ -295,6 +295,24 @@ function fn_request_base(): string
  * Visitor search form (GET, zero-JS). Themes opt in by calling it wherever
  * fits their layout; the sr-only label keeps it accessible unstyled.
  */
+/**
+ * Search results status line, shown above the post list on the /search view
+ * only. The search route sets $searchQuery; on the homepage and tag pages it's
+ * unset, so this renders nothing and every theme's home.php can call it
+ * unconditionally. role="status" so the count is announced. Styled by
+ * .search-status.
+ */
+function fn_search_status(?string $query, int $count): void
+{
+    if ($query === null || $query === '') {
+        return;
+    }
+    $msg = $count > 0
+        ? $count . ' result' . ($count === 1 ? '' : 's') . ' for “' . $query . '”'
+        : 'No results for “' . $query . '”.';
+    echo '<p class="search-status" role="status">' . e($msg) . '</p>' . "\n";
+}
+
 function fn_search_form(\AltoRouter $router, array $siteConfig, string $value = ''): void
 {
     if (empty($siteConfig['searchEnabled'])) {

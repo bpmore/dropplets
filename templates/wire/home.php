@@ -4,6 +4,7 @@ use function Fieldnote\fn_post_url;
 use function Fieldnote\fn_pagination;
 use function Fieldnote\fn_excerpt;
 require __DIR__ . '/header.php';
+Fieldnote\fn_search_status($searchQuery ?? null, count($allPosts ?? []));
 
 $dateFormat = i18n('dateformat', false);
 $posts = array_values($allPosts);
