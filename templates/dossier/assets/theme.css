@@ -1,0 +1,37 @@
+/* dossier — manila file: buff stock, typewriter mono, ink black, redaction + stamp red. */
+:root {
+    color-scheme: light;
+    --bg: #e7ddc4; --surface: #e7ddc4; --text: #211f1a; --muted: #5b5446;
+    --accent: #8a1c1c; --accent-contrast: #e7ddc4; --line: #6b6354; --focus: #8a1c1c;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #1e1c17; --surface: #1e1c17; --text: #ded6c2; --muted: #a99e86;
+        --accent: #e0795f; --accent-contrast: #1e1c17; --line: #8a8270; --focus: #e0795f;
+    }
+}
+* { box-sizing: border-box; }
+html { color-scheme: light dark; }
+body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.65;
+    font-family: "Courier New", "Courier Prime", ui-monospace, Menlo, monospace; }
+.col { max-width: 44rem; margin: 0 auto; padding: 1.5rem 1.4rem 5rem; }
+a { color: var(--accent); }
+.top { border-bottom: 2px solid var(--text); padding-bottom: .9rem; margin-bottom: 2rem; }
+.site-title { display: inline-block; font-size: 1.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; text-decoration: none; color: var(--accent-contrast); background: var(--text); padding: .15rem .55rem; }
+.site-info { margin: .5rem 0 0; color: var(--muted); }
+.index { list-style: none; margin: 0; padding: 0; }
+.index-item { border-bottom: 1px dashed var(--line); padding: .85rem 0; }
+.index-title { margin: 0; font-size: 1.1rem; }
+.index-title a { color: var(--text); text-decoration: none; }
+.index-title a:hover { color: var(--accent); }
+.index-meta { margin: .3rem 0 0; color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
+.piece-title { margin: 0 0 .3rem; font-size: 1.6rem; text-transform: uppercase; letter-spacing: .03em; }
+.piece-meta { margin: 0 0 1rem; color: var(--muted); font-size: .78rem; border-bottom: 2px solid var(--text); padding-bottom: 1rem; text-transform: uppercase; letter-spacing: .06em; }
+.piece-image, .piece-body img { max-width: 100%; height: auto; }
+.piece-body blockquote { border-left: .6rem solid var(--text); margin: 1rem 0; padding-left: 1rem; color: var(--muted); }
+.piece-body pre { border: 1px solid var(--line); padding: .8rem; overflow-x: auto; }
+.empty-state { color: var(--muted); }
+.back { margin-top: 2rem; }
+.back-link { color: var(--accent); text-decoration: none; }
+.bottom { margin-top: 3rem; border-top: 2px solid var(--text); padding-top: 1rem; color: var(--muted); font-size: .78rem; }
+.bottom a { color: var(--accent); }

@@ -1,0 +1,67 @@
+/* blueprint — architect's drawing: navy paper, cyan ink, faint grid, mono labels. */
+:root {
+    color-scheme: dark;
+    --bg: #0e2236;
+    --surface: #0e2236;
+    --text: #e6f1fb;
+    --muted: #9fc1e0;
+    --accent: #58c6ff;
+    --accent-contrast: #07182a;
+    --line: #5a7da2;
+    --focus: #58c6ff;
+}
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: #133050;
+        --surface: #133050;
+        --text: #eef5fc;
+        --muted: #aecbe6;
+        --accent: #6fd0ff;
+        --accent-contrast: #08203a;
+        --line: #6d90b6;
+        --focus: #6fd0ff;
+    }
+}
+
+* { box-sizing: border-box; }
+html { color-scheme: dark; }
+body {
+    margin: 0;
+    background-color: var(--bg);
+    background-image:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color: var(--text);
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    line-height: 1.65;
+}
+.col { max-width: 48rem; margin: 0 auto; padding: 1.5rem 1.25rem 5rem; }
+a { color: var(--accent); }
+
+.top { border: 1px solid var(--line); background: var(--bg); padding: 1rem 1.1rem; margin-bottom: 2rem; }
+.site-title { display: block; font-size: 1.5rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; color: var(--text); }
+.site-info { margin: .35rem 0 0; color: var(--muted); font-size: .85rem; letter-spacing: .04em; }
+
+.index { list-style: none; margin: 0; padding: 0; }
+.index-item { border: 1px solid var(--line); background: var(--bg); padding: 1rem 1.1rem; margin-bottom: 1rem; }
+.index-title { margin: 0; font-size: 1.2rem; }
+.index-title a { color: var(--text); text-decoration: none; }
+.index-title a:hover { color: var(--accent); }
+.index-meta { margin: .4rem 0 0; color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
+
+.piece { border: 1px solid var(--line); background: var(--bg); padding: 1.5rem 1.3rem; }
+.piece-title { margin: 0 0 .3rem; font-size: 1.7rem; letter-spacing: .04em; }
+.piece-meta { margin: 0; color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
+.piece-image { max-width: 100%; height: auto; margin: 1.2rem 0; border: 1px solid var(--line); }
+.piece-body { margin-top: 1.4rem; }
+.piece-body :is(h2, h3) { letter-spacing: .03em; }
+.piece-body img { max-width: 100%; height: auto; }
+.piece-body pre { border: 1px solid var(--line); padding: .8rem; overflow-x: auto; }
+.piece-body blockquote { border-left: 3px solid var(--accent); margin: 1rem 0; padding-left: 1rem; color: var(--muted); }
+
+.empty-state { color: var(--muted); }
+.back { margin-top: 2rem; }
+.back-link { color: var(--accent); text-decoration: none; }
+.bottom { margin-top: 3rem; border-top: 1px solid var(--line); padding-top: 1rem; color: var(--muted); font-size: .8rem; }
+.bottom a { color: var(--accent); }

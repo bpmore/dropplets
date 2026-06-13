@@ -1,0 +1,40 @@
+/* almanac — old reference book: warm cream, oxblood + ink, dense serif, double rules. */
+:root {
+    color-scheme: light;
+    --bg: #f3ecd8; --surface: #f3ecd8; --text: #2a2018; --muted: #685a43;
+    --accent: #7c1d12; --accent-contrast: #f3ecd8; --line: #7a6a4c; --focus: #7c1d12;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #211b12; --surface: #211b12; --text: #e9dec4; --muted: #b39d77;
+        --accent: #e07a5f; --accent-contrast: #211b12; --line: #8a7a5c; --focus: #e07a5f;
+    }
+}
+* { box-sizing: border-box; }
+html { color-scheme: light dark; }
+body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.6;
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif; }
+.col { max-width: 44rem; margin: 0 auto; padding: 1.5rem 1.5rem 4rem; }
+a { color: var(--accent); }
+.top { text-align: center; border-top: 3px double var(--line); border-bottom: 3px double var(--line); padding: 1rem 0; margin-bottom: 2rem; }
+.site-title { display: block; font-size: 2rem; font-weight: 700; font-variant: small-caps; letter-spacing: .06em; text-decoration: none; color: var(--text); }
+.site-info { margin: .3rem 0 0; color: var(--muted); font-style: italic; }
+.index { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 2rem; }
+.index-item { break-inside: avoid; border-bottom: 1px solid var(--line); padding: .7rem 0; }
+.index-title { margin: 0; font-size: 1.1rem; }
+.index-title a { color: var(--text); text-decoration: none; }
+.index-title a:hover { color: var(--accent); }
+.index-meta { margin: .25rem 0 0; color: var(--muted); font-size: .82rem; font-style: italic; }
+.piece-title { margin: 0 0 .25rem; font-size: 2rem; font-variant: small-caps; }
+.piece-meta { margin: 0; color: var(--muted); font-style: italic; }
+.piece-image, .piece-body img { max-width: 100%; height: auto; }
+.piece-body { margin-top: 1.4rem; }
+.piece-body :first-letter { } /* reserved */
+.piece-body blockquote { border-left: 3px solid var(--accent); margin: 1rem 0; padding-left: 1rem; font-style: italic; color: var(--muted); }
+.piece-body pre { border: 1px solid var(--line); padding: .8rem; overflow-x: auto; font-family: ui-monospace, Menlo, monospace; }
+.empty-state { color: var(--muted); font-style: italic; }
+.back { margin-top: 2rem; }
+.back-link { color: var(--accent); text-decoration: none; }
+.bottom { margin-top: 3rem; border-top: 3px double var(--line); padding-top: 1rem; color: var(--muted); font-style: italic; font-size: .85rem; }
+.bottom a { color: var(--accent); }
+@media (max-width: 32rem) { .index { columns: 1; } }

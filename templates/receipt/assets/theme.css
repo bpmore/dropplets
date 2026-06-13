@@ -1,0 +1,36 @@
+/* receipt — thermal POS slip: narrow column, monospace, dashed rules. */
+:root {
+    color-scheme: light;
+    --bg: #ffffff; --surface: #ffffff; --text: #1a1a1a; --muted: #565656;
+    --accent: #b00020; --accent-contrast: #ffffff; --line: #333333; --focus: #b00020;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #161616; --surface: #161616; --text: #ededed; --muted: #a8a8a8;
+        --accent: #ff6b6b; --accent-contrast: #161616; --line: #aaaaaa; --focus: #ff6b6b;
+    }
+}
+* { box-sizing: border-box; }
+html { color-scheme: light dark; }
+body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.6;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 14px; }
+.col { max-width: 34rem; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
+a { color: var(--accent); }
+.top { text-align: center; border-bottom: 2px dashed var(--line); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+.site-title { display: block; font-size: 1.3rem; font-weight: 700; text-transform: uppercase; letter-spacing: .15em; text-decoration: none; color: var(--text); }
+.site-info { margin: .4rem 0 0; color: var(--muted); font-size: .8rem; }
+.index { list-style: none; margin: 0; padding: 0; }
+.index-item { border-bottom: 1px dashed var(--line); padding: .9rem 0; }
+.index-title { margin: 0; font-size: 1.05rem; font-weight: 700; }
+.index-title a { color: var(--text); text-decoration: none; }
+.index-meta { margin: .35rem 0 0; color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; }
+.piece-title { margin: 0 0 .3rem; font-size: 1.4rem; text-transform: uppercase; letter-spacing: .06em; }
+.piece-meta { margin: 0 0 1rem; color: var(--muted); font-size: .75rem; border-bottom: 1px dashed var(--line); padding-bottom: 1rem; }
+.piece-image, .piece-body img { max-width: 100%; height: auto; }
+.piece-body pre { border: 1px dashed var(--line); padding: .7rem; overflow-x: auto; }
+.piece-body blockquote { border-left: 2px solid var(--accent); margin: 1rem 0; padding-left: .9rem; color: var(--muted); }
+.empty-state { color: var(--muted); text-align: center; }
+.back { margin-top: 2rem; text-align: center; }
+.back-link { color: var(--accent); text-decoration: none; }
+.bottom { margin-top: 2.5rem; border-top: 2px dashed var(--line); padding-top: 1rem; text-align: center; color: var(--muted); font-size: .78rem; }
+.bottom a { color: var(--accent); }
