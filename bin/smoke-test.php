@@ -839,6 +839,27 @@ if (!class_exists(ZipArchive::class)) {
     check('notion import creates a draft', $s === 302, "status $s");
     [$s, , $b] = req('GET', "$base/2025/01/my-notion-post", $authed);
     check('notion body rendered + property tags lifted', $s === 200 && str_contains($b, '<strong>Notion</strong>') && str_contains($b, '/tag/tech'), "status $s");
+
+    // DEV (dev.to): markdown-native JSON, tag_list -> tags.
+    $dtJson = "$tmp/devto.json";
+    file_put_contents($dtJson, json_encode([
+        ['title' => 'Dev Post', 'slug' => 'dev-post-abc', 'tag_list' => ['webdev', 'php'],
+         'published_at' => '2025-10-01T00:00:00Z', 'user' => ['name' => 'Brent'],
+         'body_markdown' => "## Hi\n\nFrom **dev.to**. See [read more](https://e.com)."],
+    ]));
+    [, , $b] = req('GET', "$base/admin/import", $authed);
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+    [$s, , $b] = req('POST', "$base/admin/import", $authed + ['body' => [
+        'csrf_token'   => $m[1],
+        'importSource' => 'auto',
+        'importZip'    => new CURLFile($dtJson, 'application/json', 'devto.json'),
+    ]]);
+    check('devto json auto-detected; dry-run flags a11y, writes nothing', $s === 200 && str_contains($b, 'dev-post-abc') && str_contains($b, 'to fix') && str_contains($b, 'Nothing has been written'), "status $s");
+    preg_match('/name="csrf_token" value="([a-f0-9]{64})"/', $b, $m);
+    [$s] = req('POST', "$base/admin/import/confirm", $authed + ['body' => 'csrf_token=' . $m[1]]);
+    check('devto import creates a draft', $s === 302, "status $s");
+    [$s, , $b] = req('GET', "$base/2025/10/dev-post-abc", $authed);
+    check('devto markdown body rendered + tag_list mapped', $s === 200 && str_contains($b, '<strong>dev.to</strong>') && str_contains($b, '/tag/webdev'), "status $s");
 }
 
 // ---------------------------------------------------------- theme gallery --
